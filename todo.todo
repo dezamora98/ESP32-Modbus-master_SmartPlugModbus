@@ -1,0 +1,213 @@
+{
+  "todotree": {
+    "tree": [
+      {
+        "key": 1684592721627,
+        "children": [
+          {
+            "key": 1684592769122,
+            "children": [],
+            "todo": {
+              "content": "Manejo de sensores y actuadores",
+              "id": 1684592769122,
+              "level": "default",
+              "done": false,
+              "start": 1684592769122
+            }
+          },
+          {
+            "key": 1684592806747,
+            "children": [],
+            "todo": {
+              "content": "Comunicación",
+              "id": 1684592806747,
+              "level": "default",
+              "done": false,
+              "start": 1684592806747
+            }
+          },
+          {
+            "key": 1684592814217,
+            "children": [],
+            "todo": {
+              "content": "Logica de Pago",
+              "id": 1684592814217,
+              "level": "default",
+              "done": false,
+              "start": 1684592814217
+            }
+          },
+          {
+            "key": 1684592824081,
+            "children": [],
+            "todo": {
+              "content": "Sistema de Seguridad",
+              "id": 1684592824081,
+              "level": "default",
+              "done": false,
+              "start": 1684592824081
+            }
+          },
+          {
+            "key": 1684592945370,
+            "children": [],
+            "todo": {
+              "content": "Sistema de Configuraciones",
+              "id": 1684592945370,
+              "level": "default",
+              "done": false,
+              "start": 1684592945370
+            }
+          }
+        ],
+        "todo": {
+          "content": "Definicion de Arquitectura",
+          "id": 1684592721627,
+          "level": "default",
+          "done": false,
+          "start": 1684592721627
+        }
+      },
+      {
+        "key": 1684592748290,
+        "children": [
+          {
+            "key": 1684592858136,
+            "children": [],
+            "todo": {
+              "content": "Manejo de Sensores y Actuadores",
+              "id": 1684592858136,
+              "level": "default",
+              "done": false,
+              "start": 1684592858136
+            }
+          },
+          {
+            "key": 1684592879195,
+            "children": [],
+            "todo": {
+              "content": "Comunicacion con Plataforma",
+              "id": 1684592879195,
+              "level": "default",
+              "done": false,
+              "start": 1684592879195
+            }
+          },
+          {
+            "key": 1684592891411,
+            "children": [],
+            "todo": {
+              "content": "Logica de Pago",
+              "id": 1684592891411,
+              "level": "default",
+              "done": false,
+              "start": 1684592891411
+            }
+          },
+          {
+            "key": 1684592898690,
+            "children": [],
+            "todo": {
+              "content": "Sistema de Seguridad",
+              "id": 1684592898690,
+              "level": "default",
+              "done": false,
+              "start": 1684592898690
+            }
+          },
+          {
+            "key": 1684592909946,
+            "children": [],
+            "todo": {
+              "content": "Integracion de WifiManager con Pagina Local",
+              "id": 1684592909946,
+              "level": "default",
+              "done": false,
+              "start": 1684592909946
+            }
+          },
+          {
+            "key": 1684592935210,
+            "children": [],
+            "todo": {
+              "content": "Sistema de Configuraciones",
+              "id": 1684592935210,
+              "level": "default",
+              "done": false,
+              "start": 1684592935210
+            }
+          }
+        ],
+        "todo": {
+          "content": "Implementacion",
+          "id": 1684592748290,
+          "level": "default",
+          "done": false,
+          "start": 1684592748290
+        }
+      },
+      {
+        "key": 1684592756896,
+        "children": [
+          {
+            "key": 1684592961978,
+            "children": [],
+            "todo": {
+              "content": "Unit testing para cada modulo",
+              "id": 1684592961978,
+              "level": "default",
+              "done": false,
+              "start": 1684592961978
+            }
+          }
+        ],
+        "todo": {
+          "content": "Testing",
+          "id": 1684592756896,
+          "level": "default",
+          "done": false,
+          "start": 1684592756896
+        }
+      },
+      {
+        "key": 1684592760553,
+        "children": [
+          {
+            "key": 1684592972250,
+            "children": [],
+            "todo": {
+              "content": "definir sistema de deploy con alternativa a OTA",
+              "id": 1684592972250,
+              "level": "default",
+              "done": false,
+              "start": 1684592972250
+            }
+          }
+        ],
+        "todo": {
+          "content": "Deploy",
+          "id": 1684592760553,
+          "level": "default",
+          "done": false,
+          "start": 1684592760553
+        }
+      }
+    ],
+    "expandKeys": [
+      1684592721627,
+      1684592748290,
+      1684592756896,
+      1684592760553
+    ],
+    "schema": "https://github.com/Saber2pr/vsc-ext-todolist/blob/master/src/api/type.ts#L3",
+    "add_mode": "bottom",
+    "virtual": false,
+    "showLine": false,
+    "playFontSize": 24,
+    "title": "todo",
+    "autoSort": false,
+    "showEndTime": false,
+    "lang": "en",
+    "version": "1684593009059"
+  }
+}
