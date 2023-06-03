@@ -1,18 +1,22 @@
 #include <Arduino.h>
+#include <SerialDebug.h> //https://github.com/JoaoLopesF/SerialDebug
+#include <ChargeController.h>
+#include <SensorMonitorInterface.h>
+#include <AnalogSensorMonitor.h>
+#include <charge_station_config.h>
 
-// put function declarations here:
-int myFunction(int, int);
+void setup()
+{
+  Serial.begin(115200);
+  printlnA(F("**** Setup: initializing ..."));
 
-void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  SensorMonitorInterface *sensor1 = new AnalogSensorMonitor(AnalogIn_1);
+  SensorMonitorInterface *sensor2 = new AnalogSensorMonitor(AnalogIn_2);
+
+  ChargeController socket1(sensor1, Relay_1, 0001);
+  ChargeController socket2(sensor2, Relay_2, 0002);
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
-}
-
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+void loop()
+{
 }
