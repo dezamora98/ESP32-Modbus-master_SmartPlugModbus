@@ -13,8 +13,11 @@ void setup()
   SensorMonitorInterface *sensor1 = new AnalogSensorMonitor(AnalogIn_1);
   SensorMonitorInterface *sensor2 = new AnalogSensorMonitor(AnalogIn_2);
 
-  ChargeController socket1(sensor1, Relay_1, 0001);
-  ChargeController socket2(sensor2, Relay_2, 0002);
+  ChargeController socket1;
+  ChargeController socket2;
+
+  socket1.init(sensor1, Relay_1, 0001);
+  socket2.init(sensor2, Relay_2, 0002);
 }
 
 void loop()
