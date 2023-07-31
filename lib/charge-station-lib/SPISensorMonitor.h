@@ -1,14 +1,14 @@
 #ifndef SPISENSORMONITOR
 #define SPISENSORMONITOR
 
+#include <Arduino.h>
 #include "SensorMonitorInterface.h"
 
 class SPISensorMonitor : public SensorMonitorInterface
 {
 public:
-    SPISensorMonitor(int analogSensorPin);
-    bool begin();
-    float read();
+    bool begin() override ;
+    float read() override ;
 };
 
 #endif

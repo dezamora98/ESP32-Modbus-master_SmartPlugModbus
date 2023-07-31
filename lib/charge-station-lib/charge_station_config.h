@@ -61,8 +61,9 @@
 // #define SERIAL_MON_TX 32
 // #define SERIAL_MON_RX 33
 
-//* WiFi Configuration
+constexpr char CONNECTION_MODE[] = "WIFI";
 
+//* WiFi Configuration
 // Roger
 //  constexpr char DEFAULT_WIFI_SSID[] = "Redmi 9";
 //  constexpr char DEFAULT_WIFI_PASS[] = "theclockwork94";
@@ -71,19 +72,18 @@
 //  constexpr char DEFAULT_WIFI_SSID[] = "giselle98";
 //  constexpr char DEFAULT_WIFI_PASS[] = "giselle123";
 
-// //* Wifi HOST Configuration
-// constexpr char DEFAULT_WIFI_AP_SSID[] = "Velkys-PLC";
-// constexpr char DEFAULT_WIFI_AP_PASS[] = "12345678";
-// const byte DNSSERVER_PORT = 53; // DNS
+//* Wifi HOST Configuration
+constexpr char DEFAULT_WIFI_AP_SSID[] = "Velkys-PLC";
+constexpr char DEFAULT_WIFI_AP_PASS[] = "12345678";
+const byte DNSSERVER_PORT = 53; // DNS
 
-// //* SERVER Configuration
+//* SERVER Configuration
+constexpr char THINGSBOARD_SERVER[] = "152.206.85.71";
+constexpr uint16_t THINGSBOARD_PORT = 1883U;
+constexpr char TOKEN[] = "vW9NYuIisNflCuGz92HA"; // plc-iot
 
-// constexpr char THINGSBOARD_SERVER[] = "152.206.85.71";
-// constexpr uint16_t THINGSBOARD_PORT = 1883U;
-// constexpr char TOKEN[] = "vW9NYuIisNflCuGz92HA"; // plc-iot
+//* DEFAULTS
 
-// //* DEFAULTS
-
-// constexpr uint16_t PUBLISH_TELEMETRY_PERIOD = 1000U;
+constexpr uint16_t PUBLISH_TELEMETRY_PERIOD = 1000U;
 
 #endif // PLCIOT_CONFIG_H

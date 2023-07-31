@@ -1,5 +1,7 @@
 {
   "files.associations": {
-    "pi": "c"
-  }
+    "pi": "c",
+    "new": "cpp"
+  },
+  "cmake.configureOnOpen": true
 }

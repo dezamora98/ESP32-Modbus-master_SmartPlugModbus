@@ -7,10 +7,13 @@ AnalogSensorMonitor::AnalogSensorMonitor(int _pin) : _acs712(_pin, 3.3, 4095, 18
     //  ACS712 30A uses  66 mV per A
     // (analog pin, max voltage, DAC resolution, sencibility )
     _pin = _pin;
+    Serial.println("analog sensor contructor");
 }
 
 bool AnalogSensorMonitor::begin()
-{   uint16_t start, stop, midPoint = 0;
+{
+    Serial.println("Analog sensor begin");
+    uint16_t start, stop, midPoint = 0;
     _acs712.autoMidPoint();
     Serial.println("Finding midPoint"); // the output voltage of the sensor when there is no current flowing through it.
     //  might be different 1 cycle or 100.
@@ -32,9 +35,11 @@ bool AnalogSensorMonitor::begin()
 
     _acs712.suppressNoise(true);
     Serial.println("Suppress Noise = TRUE");
+    return 1;
 }
 
 float AnalogSensorMonitor::read()
 {
+    Serial.println("Analog sensor begin");
     return _acs712.mA_AC();
 }
