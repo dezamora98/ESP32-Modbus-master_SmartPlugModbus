@@ -1,29 +1,51 @@
 #include <Arduino.h>
 #include <charge_station_config.h>
 #include <ConnectionController.h>
+#include <RemoteInterface.h>
+#include <ChargerContainer.h>
 #include <WifiController.h>
 #include <ChargeController.h>
 #include <SensorMonitorInterface.h>
 #include <AnalogSensorMonitor.h>
-#include <ServerController.h>
 #include <SerialDebug.h>
 
 WifiController wifi_controller;
 ConnectionController *conn_controller = ConnectionController::Instance();
+RemoteInterface remote_interface;
+ThingsBoard *tb_h;
+ChargerContainer charge_station;
 // ServerController *server_controller;
 
 /*
-- Clase Remote Interface abstracta
-  - Clase intermedia entre el modulo A9 (Utiliza la libreria de Daniel)
-  - Clase mediante ThingsBoard comunicacion mediante WIFI (inicialmente para pruebas)
+//* RPC
+  # > startCharge (port number)
+  # > tiempo de Carga
+  # > abortCharge (port number)
+  # > listAvailablePorts
 
-- ## Clase mediante Thingsboard necesita de un WifiClient
-  IDEN A VELKYS PLC -> WifiController + WifiClient + Connection Manager
-  Valorar en Connection Manager el uso de otra estructura sin necesidad de cada
-  vez que desee modificar lo q voy a mandar tenga que cambiar en ese lugar
+//* Telemetry
+  # > port_state_charge_ack
+  # > consum_report
 
-- Iniciar el Host - Configuraciones necesarias ?
-- Como vuelvo a poner el modo Host una vez hechas las configuraciones necesarias ?
+//* Configuraciones en modo HOST SettingsManager
+  - id_dispositivo
+  - localizacion
+  - temas de conexion (modo WIFI - A9)
+*/
+
+/* StateMachine behavior
+    # > [x] reserve
+    # > [x] plug_in
+    # > [x] start_charge_when_plug_in
+    # > [ ] cancel_reserve -> por timeout o por una llamada directa a un metodo
+    # > [x] start_charge_when_reserve
+    # > [x] plug_out
+    # > [x] charge_complete
+    # > [x] abort_charge
+    # > [ ] reset_port
+
+
+- El modo host se activa de forma manual
 
 - Las Configuraciones linkearlas a la una clase de SettingsManager
 
@@ -42,27 +64,27 @@ CONFIGURACIONES
 */
 
 // ConnectionController *connection_controller;
+bool x;
 
 void setup()
 {
   SerialMon.begin(SERIAL_DEBUG_BAUD);
   delay(1000);
+  printlnA("Initializing program ... ");
 
   // wifi_controller.resetWifiSettings();
+
+  // TODO: Inicializar modo Access Point
+
+  //* Guardando las credenciales a la wifi a la que me voy a conectar, normalmante se realiza la config desde la web embebida
   wifi_controller.set_credentials("giselle98", "giselle123");
   wifi_controller.setAccessPoint(false);
   delay(100);
-  // Inicializar la conexión a ThingsBoard mediante WiFi
+
+  //* Inicializar la conexión a ThingsBoard mediante WiFi
   conn_controller->platformConnectionInit(ConnectionType::WIFI);
   ConnectionState con_state = conn_controller->getConnectionState();
-
-  // server_controller.init(thingsBoard);
-
-  // SensorMonitorInterface *sensor1;
-  // SensorMonitorInterface *sensor2;
-
-  // sensor1 = new AnalogSensorMonitor(AnalogIn_1);
-  // sensor2 = new AnalogSensorMonitor(AnalogIn_2);
+  tb_h = conn_controller->getThingsBoardHandler();
 
   AnalogSensorMonitor sensor1(AnalogIn_1);
   AnalogSensorMonitor sensor2(AnalogIn_2);
@@ -70,32 +92,26 @@ void setup()
   ChargeController socket1;
   ChargeController socket2;
 
-  socket1.init(&sensor1, Relay_1, 1);
-  socket2.init(&sensor2, Relay_2, 2);
+  socket1.init(&sensor1, Relay_1, DigitalIn_1, 1);
+  socket2.init(&sensor2, Relay_2, DigitalIn_2, 2);
 
-  // bool success = wifi_controller.initWifi();
+  charge_station.addChargePort(socket1);
+  charge_station.addChargePort(socket2);
 }
 
 void loop()
 {
-  if (conn_controller->isPlatformConnected())
+  // TODO Si el PIN del modo HOST esta activo levanto access point paro el resto de las comunicaciones - MODO CONFIGURACIONES
+
+  if (conn_controller->isPlatformConnected()) // si se conecto a la plataforma
   {
-    Serial.println("Conection active");
+    // printlnA("CONNECTED TO THINGSBOARD");
+    // remote_interface.init(tb_h);
+    // printlnA(telemetry_data.consumption1);
+    // x = remote_interface.sendTelemetryToPlatform(telemetry_data);
   }
   else
   {
-    Serial.println("NO CONECTION");
+    printlnA("THINGSBOARD - DISCONNECT");
   }
-
-  if (conn_controller->getConnectionState() == ConnectionState::CONNECTED)
-  {
-    Serial.println("Conexión a ThingsBoard establecida mediante WiFi");
-    Serial.println("EN TALLA BEIBI");
-  }
-  delay(1000);
-  // // Enviar telemetría utilizando ServerController
-  // ChargeTelemetry chargeTelemetry;
-  // // cargar la telemetría
-  // server_controller.sendTelemetryToPlatform(chargeTelemetry);
-  // delay(1000);
 }
