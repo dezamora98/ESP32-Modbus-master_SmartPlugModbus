@@ -2,14 +2,16 @@
 
 ChargeController::ChargeController()
 {
-    // _measurement_time = MEASUREMENT_TIME;
+    _measurement_time = MEASUREMENT_TIME;
+    _state = IDDLE;
 }
 
 /* -------------------------------------------------------------------------- */
-void ChargeController::setChargeState(bool state)
+void ChargeController::setChargeState(ChargePortStates state)
 {
-    is_active = state;
+    _state = state;
 }
+
 void ChargeController::setMaxCurrentLimit(float current)
 {
     _maxCurrentLimit = current;
@@ -20,47 +22,54 @@ void ChargeController::setPurchasedChargingTime(int purchasedChargingTime)
 }
 
 /* -------------------------------------------------------------------------- */
-void ChargeController::init(SensorMonitorInterface *sensor, int relayPin, int id)
+void ChargeController::init(SensorMonitorInterface *sensor, int relayPin, int pluggedPin, int id)
 {
     _sensor = sensor;
     _relayPin = relayPin;
+    _pluggedPin = pluggedPin;
     is_active = false;
+    _state = IDDLE;
     _id = id;
-    _maxCurrentLimit = 1000; //* PONER UN VALOR POR DEFECTO DEL CONSUMO DE CORRIENTE MAXIMO
+    _maxCurrentLimit = MAX_CURRENT;
 
     pinMode(_relayPin, OUTPUT);
-    digitalWrite(_relayPin, LOW); // desactivar relay
-    
-    _sensor->begin();
-    // // task configuration
-    // BaseType_t rc = xTaskCreatePinnedToCore(
-    //     chargeControllerTask,
-    //     "chargeControllerTask",
-    //     5000,
-    //     this,
-    //     1,
-    //     NULL,
-    //     ARDUINO_RUNNING_CORE);
-    // assert(rc == pdPASS);
+    pinMode(_pluggedPin, INPUT); // TODO input_pullup???
 
-    // // timer configuration
-    // _measurement_timerH = xTimerCreate(
-    //     "PowerMeasurementTimer",
-    //     pdMS_TO_TICKS(_measurement_time),
-    //     pdTRUE,
-    //     this,
-    //     _powerMeasurementTimerCallback);
+    digitalWrite(_relayPin, LOW); // desactivar relay
+
+    _sensor->begin();
+
+    // task configuration
+    BaseType_t rc = xTaskCreatePinnedToCore(
+        chargeControllerTask,
+        "chargeControllerTask",
+        5000,
+        this,
+        1,
+        NULL,
+        ARDUINO_RUNNING_CORE);
+    assert(rc == pdPASS);
+
+    // timer configuration
+    _measurement_timerH = xTimerCreate(
+        "PowerMeasurementTimer",
+        pdMS_TO_TICKS(_measurement_time),
+        pdTRUE,
+        this,
+        _powerMeasurementTimerCallback);
 }
 
+/*Iniciar la carga, es decir dejar pasar la corriente*/
 void ChargeController::startCharge()
 {
     printlnD("[CHARGE_CONTROLLER] Start charge");
     digitalWrite(_relayPin, HIGH); // activar relay
-    charge_activated = true;       // se activa la carga de la toma
+    // charge_activated = true;       // se activa la carga de la toma
     is_active = true;
-    // _remainingTime = _purchasedChargingTime;                         // tiempo restante es igual al tiempo comprado
-    // BaseType_t rc = xTimerStart(_measurement_timerH, portMAX_DELAY); // iniciar temporizador
-    // assert(rc == pdPASS);                                            // Asegurarse de que el temporizador se inició correctamente con una aserción
+    _state = CHARGING;
+    _remainingTime = _purchasedChargingTime;                         // tiempo restante es igual al tiempo comprado
+    BaseType_t rc = xTimerStart(_measurement_timerH, portMAX_DELAY); // iniciar temporizador
+    assert(rc == pdPASS);                                            // Asegurarse de que el temporizador se inició correctamente con una aserción
 }
 
 void ChargeController::stopCharge()
@@ -68,13 +77,25 @@ void ChargeController::stopCharge()
     printlnD("[CHARGE_CONTROLLER] Stop charge");
     digitalWrite(_relayPin, LOW); // desactivar relay
     is_active = false;
-    // BaseType_t rc = xTimerStop(_measurement_timerH, portMAX_DELAY); // detener el temporizador
-    // assert(rc == pdPASS);
+    BaseType_t rc = xTimerStop(_measurement_timerH, portMAX_DELAY); // detener el temporizador
+    assert(rc == pdPASS);
 }
 
-bool ChargeController::getChargeState()
+void ChargeController::reserveSocket(bool reserve)
 {
-    return is_active;
+    if (reserve)
+    {
+        _state = RESERVED;
+    }
+    else
+    {
+        _state = IDDLE;
+    }
+}
+
+ChargePortStates ChargeController::getChargeState()
+{
+    return _state;
 }
 
 float ChargeController::getChargeCurrent()
@@ -89,10 +110,10 @@ void ChargeController::updateData()
     // TODO actualizar la informacion de la toma de carga (en caso de que se desconecte la )
 }
 
-float ChargeController::getPowerConsumption() // devuelve la cantidad de kwats comsumidos
+float ChargeController::getAcumulateConsumption() // devuelve la cantidad de kwats comsumidos
 {
-    printlnD("[CHARGE_CONTROLLER] The watts consumption is: " + String(_powerConsumption));
-    return _powerConsumption;
+    printlnD("[CHARGE_CONTROLLER] The watts consumption is: " + String(_energy));
+    return _energy;
 }
 
 // void ChargeController::setPowerCapacity(float powerCapacity) // Cantidad de kwats a generar
@@ -100,49 +121,73 @@ float ChargeController::getPowerConsumption() // devuelve la cantidad de kwats c
 //     _powerCapacity = powerCapacity;
 // }
 
-// /* ----------------------------- Timer callback ----------------------------- */
-// void ChargeController::_powerMeasurementTimerCallback(TimerHandle_t timer_h)
-// {
-//     ChargeController *obj = static_cast<ChargeController *>(pvTimerGetTimerID(timer_h));
-//     printD("[CHARGE_CONTROLLER] Timer callback");
+/* ----------------------------- Timer callback ----------------------------- */
+void ChargeController::_powerMeasurementTimerCallback(TimerHandle_t timer_h)
+{
+    ChargeController *obj = static_cast<ChargeController *>(pvTimerGetTimerID(timer_h));
+    printD("[CHARGE_CONTROLLER] Timer callback");
 
-//     obj->_measurement_timeout = pdTRUE;
-// }
+    obj->_measurement_timeout = pdTRUE;
+}
 
-// /* ----------------- task function to control the charger ---------------- */
-// void ChargeController::chargeControllerTask(void *args)
-// {
-//     ChargeController *obj = static_cast<ChargeController *>(args);
-//     float wattsConsum = 0;
+/* ----------------- task function to control the charger ---------------- */
+void ChargeController::chargeControllerTask(void *args)
+{
+    ChargeController *obj = static_cast<ChargeController *>(args);
+    float wattsConsum = 0;
 
-//     for (;;)
-//     {
-//         if (obj->is_active && obj->charge_activated == false) // desde la plataforma activa la toma
-//         {
-//             obj->startCharge();
-//         }
-//         else if (obj->_measurement_timeout) // timer ends
-//         {
-//             obj->_measurement_timeout = pdFALSE;
-//             obj->_powerConsumption = obj->_sensor->read() * VOLTAGE; // Potencia consumida en el instante = corriente * voltaje 110V
-//             obj->_energy += obj->_powerConsumption;                  // enegia acumulada
+    for (;;)
+    {
+        if (digitalRead(obj->_pluggedPin)) // se conecto a la toma
+        {
+            obj->plug_in = true;
+        }
+        else
+        {
+            obj->plug_in = false;
+        }
 
-//             obj->_remainingTime -= 1; // disminuye un segundo al tiempo de carga
+        //* MAQUINA DE ESTADO
+        if (obj->_state == RESERVED)
+        {
+            //* MODO RESERVED VIENE DE THIGNSBOARD
+            if (obj->plug_in)
+                obj->_state = PLUGGED;
+        }
+        else if (obj->_state == PLUGGED)
+        {
+            obj->startCharge();
+        }
+        else if (obj->_state == CHARGING)
+        {
+            if (obj->_measurement_timeout)
+            {
+                obj->_measurement_timeout = pdFALSE;
+                obj->_powerConsumption = obj->_sensor->read() * VOLTAGE; // Potencia consumida en el instante = corriente * voltaje 110V
+                // TODO medir voltaje
+                // TODO medir temperatura
+                obj->_energy += obj->_powerConsumption; // enegia acumulada
 
-//             if (!obj->is_active && obj->_remainingTime <= 0 && !obj->is_connected && obj->_sensor->read() < obj->_maxCurrentLimit)
-//             { /*
-//                 - si esta desactivado el puerto (desde la plataforma mandan a parar)
-//                 - si se acaba el timepo comprado
-//                 - si se desconecta la toma fisica
-//                 - si existe un alto consumo
-//             */
-//                 obj->stopCharge();
-//                 obj->updateData();
-//             }
-//             else
-//             {
-//                 obj->updateData(); // call updateData() para actualzar los valores en la plataforma
-//             }
-//         }
-//     }
-// }
+                obj->_remainingTime -= 1; // disminuye un segundo al tiempo de carga
+            }
+            if (obj->_remainingTime < 0 || !obj->plug_in || obj->_sensor->read() < obj->_maxCurrentLimit)
+            { /*
+              /! //*Si mandan a desconcetar desde ThingsBoard
+               - si se acaba el timepo comprado
+               - si se desconecta la toma fisica
+               - si existe un alto consumo
+              */
+                obj->_state = ABORTING;
+            }
+        }
+        else if (obj->_state == CHARGE_COMPLETE)
+        {
+            obj->stopCharge();
+        }
+        else if (obj->_state == ABORTING)
+        {
+            obj->stopCharge();
+            // TODO - Alarmas de xq se aborto
+        }
+    }
+}
