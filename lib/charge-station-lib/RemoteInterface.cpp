@@ -70,16 +70,16 @@ void RemoteInterface::sendDbgCounter()
     }
 }
 
-bool RemoteInterface::sendTelemetryToPlatform(ChargerContainer &charge_telem)
-{
-    if (_tb_handler != nullptr)
-    {
-        bool success = true;
-        success &= _tb_handler->sendTelemetryFloat("ain_1", charge_telem.getAcumulateConsumption(1));
-        return success;
-    }
-    return false;
-}
+// bool RemoteInterface::sendTelemetryToPlatform(ChargeStation &charge_telem)
+// {
+//     if (_tb_handler != nullptr)
+//     {
+//         bool success = true;
+//         success &= _tb_handler->sendTelemetryFloat("ain_1", charge_telem.getAcumulateConsumption(1));
+//         return success;
+//     }
+//     return false;
+// }
 
 bool RemoteInterface::_suscribeSharedAttributes()
 {
@@ -174,7 +174,7 @@ void RemoteInterface::_publishTelemtryTask(void *args)
     int dbg_counter = 0;
 
     RemoteInterface *obj = static_cast<RemoteInterface *>(args);
-    ChargerContainer *charge_telem = static_cast<ChargerContainer *>(args);
+    // ChargeStation *charge_telem = static_cast<ChargeStation *>(args);
 
     bool rpc_subscribed = false;
 
@@ -218,9 +218,9 @@ void RemoteInterface::_publishTelemtryTask(void *args)
 
                     if (values)
                     {
-                        obj->_tb_handler->sendTelemetryFloat("ain_1", charge_telem->getState(1));
+                        // obj->_tb_handler->sendTelemetryFloat("ain_1", charge_telem->getState(1));
                         printA("[REMOTE_INTERFACE] Socket1:");
-                        printlnA(charge_telem->getState(1));
+                        // printlnA(charge_telem->getState(1));
 
                         // StaticJsonDocument<128> data;
                         // data["ts"] = rtc.now() * 1000;

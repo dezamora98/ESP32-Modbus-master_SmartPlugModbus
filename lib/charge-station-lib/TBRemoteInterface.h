@@ -1,6 +1,5 @@
-#ifndef REMOTEINTERFACE_H
-#define REMOTEINTERFACE_H
-
+#ifndef TBREMOTEINTERFACE
+#define TBREMOTEINTERFACE
 #pragma once
 
 #include <Arduino.h>
@@ -10,15 +9,14 @@
 #include <ThingsBoard.h>
 #include <ConnectionController.h>
 
-#include "charge_station_config.h"
+#include <charge_station_config.h>
 
-//* Interfaz para trabajo con Thingsboard //
-
-class RemoteInterface
+class TBRemoteInterface
 {
+
 public:
-    RemoteInterface();
-    ~RemoteInterface();
+    TBRemoteInterface();
+    ~TBRemoteInterface();
 
     ChargePortController charge_station_controller;
     ConnectionController *conn_controller;
