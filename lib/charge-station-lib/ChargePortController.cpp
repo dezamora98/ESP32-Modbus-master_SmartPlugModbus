@@ -1,28 +1,28 @@
-#include "ChargeController.h"
+#include "ChargePortController.h"
 
-ChargeController::ChargeController()
+ChargePortController::ChargePortController()
 {
     _measurement_time = MEASUREMENT_TIME;
     _state = IDDLE;
 }
 
 /* -------------------------------------------------------------------------- */
-void ChargeController::setChargeState(ChargePortStates state)
+void ChargePortController::setChargeState(ChargePortStates state)
 {
     _state = state;
 }
 
-void ChargeController::setMaxCurrentLimit(float current)
+void ChargePortController::setMaxCurrentLimit(float current)
 {
     _maxCurrentLimit = current;
 }
-void ChargeController::setPurchasedChargingTime(int purchasedChargingTime)
+void ChargePortController::setPurchasedChargingTime(int purchasedChargingTime)
 {
     _purchasedChargingTime = purchasedChargingTime;
 }
 
 /* -------------------------------------------------------------------------- */
-void ChargeController::init(SensorMonitorInterface *sensor, int relayPin, int pluggedPin, int id)
+void ChargePortController::init(SensorMonitorInterface *sensor, int relayPin, int pluggedPin, int id)
 {
     _sensor = sensor;
     _relayPin = relayPin;
@@ -41,9 +41,9 @@ void ChargeController::init(SensorMonitorInterface *sensor, int relayPin, int pl
 
     // task configuration
     BaseType_t rc = xTaskCreatePinnedToCore(
-        chargeControllerTask,
-        "chargeControllerTask",
-        5000,
+        ChargePortControllerTask,
+        "ChargePortControllerTask",
+        2056,
         this,
         1,
         NULL,
@@ -60,7 +60,7 @@ void ChargeController::init(SensorMonitorInterface *sensor, int relayPin, int pl
 }
 
 /*Iniciar la carga, es decir dejar pasar la corriente*/
-void ChargeController::startCharge()
+void ChargePortController::startCharge()
 {
     printlnD("[CHARGE_CONTROLLER] Start charge");
     digitalWrite(_relayPin, HIGH); // activar relay
@@ -72,7 +72,7 @@ void ChargeController::startCharge()
     assert(rc == pdPASS);                                            // Asegurarse de que el temporizador se inició correctamente con una aserción
 }
 
-void ChargeController::stopCharge()
+void ChargePortController::stopCharge()
 {
     printlnD("[CHARGE_CONTROLLER] Stop charge");
     digitalWrite(_relayPin, LOW); // desactivar relay
@@ -81,7 +81,7 @@ void ChargeController::stopCharge()
     assert(rc == pdPASS);
 }
 
-void ChargeController::reserveSocket(bool reserve)
+void ChargePortController::reserveSocket(bool reserve)
 {
     if (reserve)
     {
@@ -93,47 +93,47 @@ void ChargeController::reserveSocket(bool reserve)
     }
 }
 
-ChargePortStates ChargeController::getChargeState()
+ChargePortStates ChargePortController::getChargeState()
 {
     return _state;
 }
 
-float ChargeController::getChargeCurrent()
+float ChargePortController::getChargeCurrent()
 {
     return _sensor->read();
 }
 
-void ChargeController::updateData()
+void ChargePortController::updateData()
 {
     printlnD("[CHARGE_CONTROLLER] Update information to ThingsBoard");
 
     // TODO actualizar la informacion de la toma de carga (en caso de que se desconecte la )
 }
 
-float ChargeController::getAcumulateConsumption() // devuelve la cantidad de kwats comsumidos
+float ChargePortController::getAcumulateConsumption() // devuelve la cantidad de kwats comsumidos
 {
     printlnD("[CHARGE_CONTROLLER] The watts consumption is: " + String(_energy));
     return _energy;
 }
 
-// void ChargeController::setPowerCapacity(float powerCapacity) // Cantidad de kwats a generar
+// void ChargePortController::setPowerCapacity(float powerCapacity) // Cantidad de kwats a generar
 // {
 //     _powerCapacity = powerCapacity;
 // }
 
 /* ----------------------------- Timer callback ----------------------------- */
-void ChargeController::_powerMeasurementTimerCallback(TimerHandle_t timer_h)
+void ChargePortController::_powerMeasurementTimerCallback(TimerHandle_t timer_h)
 {
-    ChargeController *obj = static_cast<ChargeController *>(pvTimerGetTimerID(timer_h));
+    ChargePortController *obj = static_cast<ChargePortController *>(pvTimerGetTimerID(timer_h));
     printD("[CHARGE_CONTROLLER] Timer callback");
 
     obj->_measurement_timeout = pdTRUE;
 }
 
 /* ----------------- task function to control the charger ---------------- */
-void ChargeController::chargeControllerTask(void *args)
+void ChargePortController::ChargePortControllerTask(void *args)
 {
-    ChargeController *obj = static_cast<ChargeController *>(args);
+    ChargePortController *obj = static_cast<ChargePortController *>(args);
     float wattsConsum = 0;
 
     for (;;)

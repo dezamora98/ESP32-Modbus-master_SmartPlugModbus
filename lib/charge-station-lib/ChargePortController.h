@@ -1,18 +1,17 @@
-#ifndef CHARGECONTROLLER
-#define CHARGECONTROLLER
+#ifndef CHARGEPORTCONTROLLER
+#define CHARGEPORTCONTROLLER
 
 #pragma once
 
 #include <Arduino.h>
-#include "SerialDebug.h"
-#include "SensorMonitorInterface.h"
-#include "AnalogSensorMonitor.h"
-#include "charge_station_config.h"
+#include <SerialDebug.h>
+#include <SensorMonitorInterface.h>
+#include <AnalogSensorMonitor.h>
+#include <charge_station_config.h>
 
 /*Recibo de ThingsBoard
 1. tiempo comprado por el usuario (tiempo en segundos)
 2. Toma de carga seleccionado (id de la toma)
-
 */
 
 // TODO 2. Actualizar y recibir las informaciones
@@ -28,16 +27,16 @@ enum ChargePortStates
     ABORTING         // Cancelando
 };
 
-class ChargeController
+class ChargePortController
 {
 public:
-    ChargeController();
+    ChargePortController();
 
     void init(SensorMonitorInterface *sensor, int relayPin, int pluggedPin, int id); // configuraciones iniciales
 
     void setMaxCurrentLimit(float current);                   // Establece la corriente de carga maxima permitida (Configuraciones Iniciales)
     void setPurchasedChargingTime(int purchasedChargingTime); // Tiempo de carga comprado
-    void setChargeState(ChargePortStates charge_state);       // Establece el estado del proceso de carga 1- activo
+    void setChargeState(ChargePortStates charge_state);       // Establece el estado del puerto de carga
 
     void startCharge(); // Inicia el proceso de carga
     void stopCharge();  // Detiene el proceso de carga
@@ -47,6 +46,9 @@ public:
     float getChargeCurrent();                          // Devuelve la corriente de carga actual
     ChargePortStates getChargeState();                 // Devuelve el estado actual del proceso de carga
     int getRemainingTime() { return _remainingTime; }; // retornar el tiempo restante de carga
+
+    /* ----------------------------------- ID ----------------------------------- */
+    void setID(int id) { _id = id; };
     int getID() { return _id; };
 
     void resetCharge(); // Reinicia el proceso de carga
@@ -63,23 +65,22 @@ private:
     int _purchasedChargingTime; // tiempo en segundos que tiene para cargar
     bool reserve;               // 1 - esta activa la toma
     bool plug_in;               // 1 - esta activa la
-    bool start_charge;          // 1 - esta activa la
-    ChargePortStates _state;    //
-    bool is_active;             // 1 - esta lista para cargar la toma
-    int _relayPin;              // pin del relay
-    int _pluggedPin;            // pin del de moto conectada PLUGGED
-    int _maxCurrentLimit;       // limite de corriente maxima
-    float _powerCapacity;       // cantidad de watt a consumir
-    float _powerConsumption;    // cantidad de watts consumidos en el instante de medicion
-    float _currentConsumption;  // lectura del sensor
-    bool is_connected;          // 1 - esta conectado a la toma
-    float _energy;              // energia consumida (acomulada)
+    // bool start_charge;          // 1 - esta activa la
+    ChargePortStates _state; //
+    bool is_active;          // 1 - esta lista para cargar la toma
+    int _maxCurrentLimit;    // limite de corriente maxima
+    float _powerConsumption; // cantidad de watts consumidos en el instante de medicion
+    float _energy;           // energia consumida (acomulada)
+
+    /*PINES*/
+    int _relayPin;   // pin del relay
+    int _pluggedPin; // pin de toma conectado - PLUGGED
 
     TimerHandle_t _measurement_timerH;
     uint32_t _measurement_time;
 
     BaseType_t _measurement_timeout;
-    static void chargeControllerTask(void *args);           // task function to control the charger
+    static void ChargePortControllerTask(void *args);       // task function to control the charger
     static void _powerMeasurementTimerCallback(void *args); // timer callback
 };
 #endif

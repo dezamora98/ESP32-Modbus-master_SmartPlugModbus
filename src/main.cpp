@@ -2,18 +2,17 @@
 #include <charge_station_config.h>
 #include <ConnectionController.h>
 #include <RemoteInterface.h>
-#include <ChargerContainer.h>
+#include <ChargeStation.h>
 #include <WifiController.h>
-#include <ChargeController.h>
+#include <ChargePortController.h>
 #include <SensorMonitorInterface.h>
 #include <AnalogSensorMonitor.h>
 #include <SerialDebug.h>
 
 WifiController wifi_controller;
 ConnectionController *conn_controller = ConnectionController::Instance();
-RemoteInterface remote_interface;
 ThingsBoard *tb_h;
-ChargerContainer charge_station;
+ChargeStation charge_station;
 // ServerController *server_controller;
 
 /*
@@ -70,7 +69,8 @@ void setup()
 {
   SerialMon.begin(SERIAL_DEBUG_BAUD);
   delay(1000);
-  printlnA("Initializing program ... ");
+
+  printlnA(F("**** Setup: initializing ..."));
 
   // wifi_controller.resetWifiSettings();
 
@@ -89,14 +89,19 @@ void setup()
   AnalogSensorMonitor sensor1(AnalogIn_1);
   AnalogSensorMonitor sensor2(AnalogIn_2);
 
-  ChargeController socket1;
-  ChargeController socket2;
+  ChargePortController socket1;
+  ChargePortController socket2;
 
   socket1.init(&sensor1, Relay_1, DigitalIn_1, 1);
   socket2.init(&sensor2, Relay_2, DigitalIn_2, 2);
 
   charge_station.addChargePort(socket1);
   charge_station.addChargePort(socket2);
+
+  int location[2] = {2, 2};
+  charge_station.init(2, "STATION 1", location);
+
+  printlnA(F("*** Setup end"));
 }
 
 void loop()

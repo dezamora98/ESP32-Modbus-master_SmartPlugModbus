@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta lang="es-ES" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Controlador Industrial Velkys</title>
+  <!-- Favicon icon icono que sale en la web-->
+  <link rel="icon" href="logo.png" type="image/x-icon" />
+  <!-- Bootstrap -->
+  <link href="bootstrap.min.css" rel="stylesheet" media="screen" />
+  <link href="bootstrap-responsive.min.css" rel="stylesheet" media="screen" />
+  <link href="jquery.easy-pie-chart.css" rel="stylesheet" media="screen" />
+  <link href="styles.css" rel="stylesheet" media="screen" />
+  <link href="sweetalert2.min.css" rel="stylesheet" media="screen" />
+  <script src="modernizr.min.js"></script>
+</head>
+
+<body>
+  <div class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+      <div class="container-fluid">
+        <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </a>
+        <a class="brand" href="/">Velkys Admin Panel</a>
+        <!-- nav -->
+        <div class="nav-collapse collapse">
+          <ul class="nav pull-right">
+            <li class="dropdown">
+              <a href="#" role="button" class="dropdown-toggle" data-toggle="dropdown">
+                <i class="icon-user"></i> Admin <i class="caret"></i>
+              </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <a tabindex="-1" href="#">Salir</a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <!--/.nav-collapse -->
+      </div>
+    </div>
+  </div>
+  <div class="container-fluid">
+    <div class="row-fluid">
+      <!-- SideBar -->
+      <div class="span3" id="sidebar">
+        <ul class="nav nav-list bs-docs-sidenav nav-collapse collapse">
+          <li class="active">
+            <a href="/"><i class="icon-chevron-right"></i><i class="icon-home pull-left"></i> Panel de Control</a>
+          </li>
+          <li class="">
+            <a href="configwifi"><i class="icon-chevron-right"></i><i class="icon-signal pull-left"></i> Wifi</a>
+          </li>
+          <li class="">
+            <a href="#" onclick="restablecer()"><i class="icon-arrow-down pull-left"></i><i
+                class="icon-chevron-right"></i> Restablecer</a>
+          </li>
+        </ul>
+      </div>
+      <!--/SideBar-->
+      <div class="span9" id="content">
+        <div class="row-fluid">
+          <div class="navbar">
+            <div class="navbar-inner">
+              <ul class="breadcrumb">
+                <i class="icon-chevron-left hide-sidebar"><a href="#" title="Hide Sidebar" rel="tooltip">&nbsp;</a></i>
+                <i class="icon-chevron-right show-sidebar" style="display: none"><a href="#" title="Show Sidebar"
+                    rel="tooltip">&nbsp;</a></i>
+                <li>
+                  <a href="/">Dashboard</a> <span class="divider">/</span>
+                </li>
+                <li>
+                  <span class="label label-info"> Panel</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="row-fluid">
+          <div class="span12">
+            <div class="block">
+              <div class="navbar navbar-inner block-header">
+                <div class="muted pull-left">Detalles</div>
+              </div>
+              <div class="device-stats">
+                <div class="device-stat">
+                  <div class="device-info">
+                    <div class="badge-container bg-esp32">
+                      <span id="esp32-badge" class="badge">ESP32</span>
+                    </div>
+                    <div class="info-container">
+                      <span class="box-name">Dispositivo</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="device-stat">
+                  <div class="device-info">
+                    <div class="badge-container bg-temp-cpu">
+                      <span id="temp-cpu-badge" class="badge">20.5</span>
+                    </div>
+                    <div class="info-container">
+                      <span class="box-name">Temp. CPU</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="device-stat">
+                  <div class="device-info">
+                    <div class="badge-container bg-restarts">
+                      <span id="restarts-badge" class="badge">10</span>
+                    </div>
+                    <div class="info-container">
+                      <span class="box-name">Reinicios</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="device-stat">
+                  <div class="device-info">
+                    <div class="badge-container bg-uptime">
+                      <span id="uptime-badge" class="badge">1:13:22:10</span>
+                    </div>
+                    <div class="info-container">
+                      <span class="box-name">Tiempo Activo</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row-fluid">
+          <div class="span6">
+            <!-- block -->
+            <!-- Control Relays Section-->
+            <div class="block">
+              <div class="navbar navbar-inner block-header">
+                <div class="muted pull-left">Control Relays</div>
+              </div>
+              <div class="switch-container">
+                <div class="switch">
+                  <label for="switch1" class="switch-name">Relay 1</label>
+                  <input type="checkbox" id="switch1" data-id="switch1" class="switch-input" checked
+                    onchange="sendGPIO(this.id, this.checked)" />
+                  <label for="switch1" class="switch-label"></label>
+                </div>
+                <div class="switch">
+                  <label for="switch2" class="switch-name">Relay 2</label>
+                  <input type="checkbox" id="switch2" data-id="switch2" class="switch-input" checked
+                    onchange="sendGPIO(this.id, this.checked)" />
+                  <label for="switch2" class="switch-label"></label>
+                </div>
+                <div class="switch">
+                  <label for="switch3" class="switch-name">Relay 3</label>
+                  <input type="checkbox" id="switch3" data-id="switch3" class="switch-input" checked
+                    onchange="sendGPIO(this.id, this.checked)" />
+                  <label for="switch3" class="switch-label"></label>
+                </div>
+                <div class="switch">
+                  <label for="switch4" class="switch-name">Relay 4</label>
+                  <input type="checkbox" id="switch4" data-id="switch4" class="switch-input" checked
+                    onchange="sendGPIO(this.id, this.checked)" />
+                  <label for="switch4" class="switch-label"></label>
+                </div>
+              </div>
+            </div>
+            <!-- /block -->
+          </div>
+          <div class="span6">
+            <!-- block -->
+            <div class="block">
+              <div class="navbar navbar-inner block-header">
+                <div class="muted pull-left">Salidas Digitales</div>
+              </div>
+              <div class="switch-container">
+                <div class="switch-container">
+                  <div class="switch">
+                    <label for="switch5" class="switch-name">Salida Digital 1</label>
+                    <input type="checkbox" id="switch5" data-id="switch5" class="switch-input" checked
+                      onchange="sendGPIO(this.id, this.checked)" />
+                    <label for="switch5" class="switch-label"></label>
+                  </div>
+                  <div class="switch">
+                    <label for="switch6" class="switch-name">Salida Digital 2</label>
+                    <input type="checkbox" id="switch6" data-id="switch6" class="switch-input" checked
+                      onchange="sendGPIO(this.id, this.checked)" />
+                    <label for="switch6" class="switch-label"></label>
+                  </div>
+                  <div class="switch">
+                    <label for="switch7" class="switch-name">Salida Digital 3</label>
+                    <input type="checkbox" id="switch7" data-id="switch7" class="switch-input" checked
+                      onchange="sendGPIO(this.id, this.checked)" />
+                    <label for="switch7" class="switch-label"></label>
+                  </div>
+                </div>
+              </div>
+              <!-- /block -->
+            </div>
+          </div>
+        </div>
+        <!-------------DAC------------->
+        <div class="row-fluid">
+          <div class="span6">
+            <!-- block -->
+            <div class="block">
+              <div class="navbar navbar-inner block-header">
+                <div class="muted pull-left">Salidas Analogicas</div>
+              </div>
+              <div class="switch-container">
+                <div class="form-wrapper">
+                  <form class="form-inline" action="#" method="post">
+                    <div class="form-group">
+                      <div class="dac-label">DAC 1:</div>
+                      <div class="mdl-cell mdl-cell--10-col">
+                        <input id="slider-pwm-1" data-id="1" class="mdl-slider mdl-js-slider" type="range" min="0"
+                          step="0.01" max="10" onchange="sendPWM(this.dataset.id, this.value);">
+                      </div>
+                      <div class="mdl-cell mdl-cell--2-col">
+                        <input id="slider-text-pwm-1" data-id="1" type="number" name="number1" min="0" step="0.01"
+                          max="10" required class="form-control" onchange="sendPWM(this.dataset.id, this.value);">
+                      </div>
+                    </div>
+                  </form>
+                  <form class="form-inline" action="#" method="post">
+                    <div class="form-group">
+                      <div class="dac-label">DAC 2:</div>
+                      <div class="mdl-cell mdl-cell--10-col">
+                        <input id="slider-pwm-2" data-id="2" class="mdl-slider mdl-js-slider" type="range" min="0"
+                          step="0.01" max="10" onchange="sendPWM(this.dataset.id, this.value);">
+                      </div>
+                      <div class="mdl-cell mdl-cell--2-col">
+                        <input id="slider-text-pwm-2" data-id="2" type="number" name="number2" min="0" step="0.01"
+                          max="10" required class="form-control" onchange="sendPWM(this.dataset.id, this.value);">
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <!-- /block -->
+          </div>
+          <div class="span6">
+            <!-- block -->
+            <!-- Entradas Digitales Seccion-->
+            <div class="block">
+              <div class="navbar navbar-inner block-header">
+                <div class="muted pull-left">Entradas Digitales</div>
+              </div>
+              <div class="switch-container">
+                <div class="leds-container">
+                  <div class="led-container">
+                    <div class="led-label">Entrada Digital 1:</div>
+                    <div id="led-1" class="led off"></div>
+                  </div>
+                  <div class="led-container">
+                    <div class="led-label">Entrada Digital 2:</div>
+                    <div id="led-2" class="led off"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- /block -->
+          </div>
+        </div>
+        <div class="row-fluid">
+          <div class="span12">
+            <!-- block -->
+            <div class="block">
+              <div class="navbar navbar-inner block-header">
+                <div class="muted pull-left">Entradas Analógicas</div>
+              </div>
+              <div class="analog-inputs-container">
+                <div class="input">
+                  <h4>Entrada 1</h4>
+                  <p>Valor: <span id="value-1">0.00</span></p>
+                </div>
+                <div class="input">
+                  <h4>Entrada 2</h4>
+                  <p>Valor: <span id="value-2">0.00</span></p>
+                </div>
+                <div class="input">
+                  <h4>Entrada 3</h4>
+                  <p>Valor: <span id="value-3">0.00</span></p>
+                </div>
+                <div class="input">
+                  <h4>Entrada 4</h4>
+                  <p>Valor: <span id="value-4">0.00</span></p>
+                </div>
+              </div>
+              <!-- /analog-inputs -->
+            </div>
+            <!-- /block -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--/.fluid-container-->
+  <script src="jquery-1.9.1.min.js"></script>
+  <script src="bootstrap.min.js"></script>
+  <script src="jquery.easy-pie-chart.js"></script>
+  <script src="sweetalert2.min.js"></script>
+  <script src="scripts.js"></script>
+
+</body>
