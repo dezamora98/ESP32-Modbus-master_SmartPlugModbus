@@ -7,39 +7,38 @@ AnalogSensorMonitor::AnalogSensorMonitor(int _pin) : _acs712(_pin, 3.3, 4095, 18
     //  ACS712 30A uses  66 mV per A
     // (analog pin, max voltage, DAC resolution, sencibility )
     _pin = _pin;
-    Serial.println("analog sensor contructor");
 }
 
 bool AnalogSensorMonitor::begin()
 {
-    Serial.println("Analog sensor begin");
+    printlnV("Analog sensor begin");
     uint16_t start, stop, midPoint = 0;
     _acs712.autoMidPoint();
-    Serial.println("Finding midPoint"); // the output voltage of the sensor when there is no current flowing through it.
+    printlnV("Finding midPoint"); // the output voltage of the sensor when there is no current flowing through it.
     //  might be different 1 cycle or 100.
     start = micros();
     midPoint = _acs712.autoMidPointDC(1);
     stop = micros();
-    Serial.println("ACS.autoMidPointDC()");
-    Serial.print("us:\t");
-    Serial.println(stop - start);
-    Serial.print("MP 1:\t");
-    Serial.println(midPoint);
+    printlnD("ACS.autoMidPointDC()");
+    printlnD("us:\t");
+    printlnD(stop - start);
+    printD("MP 1:\t");
+    printlnD(midPoint);
 
     midPoint = _acs712.autoMidPointDC(100);
-    Serial.print("MP 100:\t");
-    Serial.println(midPoint);
+    printD("MP 100:\t");
+    printlnD(midPoint);
 
     Serial.print(". Noise mV: ");
-    Serial.println(_acs712.getNoisemV());
+    printlnD(_acs712.getNoisemV());
 
     _acs712.suppressNoise(true);
-    Serial.println("Suppress Noise = TRUE");
+    printlnD("Suppress Noise = TRUE");
     return 1;
 }
 
 float AnalogSensorMonitor::read()
 {
-    Serial.println("Analog sensor begin");
+    printlnV("Read Analog Sensor");
     return _acs712.mA_AC();
 }

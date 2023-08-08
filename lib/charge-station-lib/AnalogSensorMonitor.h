@@ -3,6 +3,7 @@
 
 #include <ACS712.h> // analog sensor
 #include "SensorMonitorInterface.h"
+#include "SerialDebug.h"
 
 class AnalogSensorMonitor : public SensorMonitorInterface
 {
