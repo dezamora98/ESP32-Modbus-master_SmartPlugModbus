@@ -11,6 +11,7 @@
 #include <ConnectionController.h>
 
 #include "charge_station_config.h"
+//! FIXME: esta clase definir las derivadas
 
 //* Interfaz para trabajo con Thingsboard //
 
@@ -28,7 +29,7 @@ public:
     // pago realizado por el usuario
 
     //* TELEMETRY
-    // bool sendTelemetryToPlatform(ChargeStation &charge_telem);
+    bool sendTelemetryToPlatform();
     void sendDbgCounter();
 
     //* Methods
