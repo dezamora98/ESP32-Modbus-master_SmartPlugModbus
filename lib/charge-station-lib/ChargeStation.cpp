@@ -11,18 +11,24 @@ ChargeStation::~ChargeStation()
 
 void ChargeStation::init(int port_count, String device_name, int device_location[2])
 {
+    Serial.println("init");
     _port_count = port_count;
     _device_location[0] = device_location[0];
     _device_location[1] = device_location[1];
     _device_name = device_name;
     _ChargePortControllers = new ChargePortController[_port_count];
+    //* Inicializar la conexión a ThingsBoard mediante WiFi
 
+    for (int i = 0; i <= _port_count - 1; i++)
+    {
+        _ChargePortControllers[i].setEventCallback(handleEvent);
+    }
     /*TODO: seleccionar el tipo de conexion a mantener si es mediante wifi o mediante A9*/
 
     conn_controller->platformConnectionInit(ConnectionType::WIFI);
     ConnectionState con_state = conn_controller->getConnectionState();
     delay(1000);
-    _remote_interface.init(conn_controller->getThingsBoardHandler());
+    // _remote_interface.init(conn_controller->getThingsBoardHandler());
 
     // // task configuration
     // BaseType_t rc = xTaskCreatePinnedToCore(
@@ -53,38 +59,43 @@ void ChargeStation::removeChargePort(int id_port)
 
 float ChargeStation::getAcumulateConsumption(int id_port)
 {
-    for (int i = 0; i < _port_count; i++)
+    for (int i = 0; i <= _port_count - 1; i++)
     {
         if (_ChargePortControllers[i].getID() == id_port)
         {
             return _ChargePortControllers[i].getAcumulateConsumption();
         }
     }
-    printlnE("El id del puerto proporcionado no existe");
+    Serial.println("El id del puerto proporcionado no existe");
     return -1;
 }
 
 ChargePortStates ChargeStation::getState(int id_port)
 {
-    for (int i = 0; i < _port_count; i++)
+    for (int i = 0; i <= _port_count - 1; i++)
     {
         if (_ChargePortControllers[i].getID() == id_port)
         {
             return _ChargePortControllers[i].getChargeState();
         }
     }
-    printlnE("El id del puerto proporcionado no existe");
+    Serial.println("El id del puerto proporcionado no existe");
 }
 
-void ChargeStation::setState(int id_port, ChargePortStates state)
+void ChargeStation::setState(int id_port, ChargePortStates state) // TODO not working the ID
 {
-    for (int i = 0; i < _port_count; i++)
+    Serial.println("Entro a la funcion ");
+
+    for (int i = 0; i <= _port_count - 1; i++)
     {
+        Serial.println("ID ");
+        Serial.println(_ChargePortControllers[_port_count - 1].getID());
+
         if (_ChargePortControllers[i].getID() == id_port)
         {
             _ChargePortControllers[i].setChargeState(state);
-            printI("Al puerto se le asigna el estado: ");
-            printlnI(state);
+            Serial.print("Al puerto se le asigna el estado: ");
+            Serial.println(state);
         }
     }
 }
@@ -94,24 +105,24 @@ void ChargeStation::setChargeTime(float charge_time)
 
 void ChargeStation::reservedPortCharge(int id_port)
 {
-    for (int i = 0; i < _port_count; i++)
+    for (int i = 0; i <= _port_count - 1; i++)
     {
         if (_ChargePortControllers[i].getID() == id_port)
         {
             _ChargePortControllers[i].setChargeState(RESERVED);
-            printlnI("Al puerto se le asigna el estado: RESERVED ");
+            Serial.println("Al puerto se le asigna el estado: RESERVED ");
         }
     }
 }
 
 void ChargeStation::abortPortCharge(int id_port)
 {
-    for (int i = 0; i < _port_count; i++)
+    for (int i = 0; i <= _port_count - 1; i++)
     {
         if (_ChargePortControllers[i].getID() == id_port)
         {
             _ChargePortControllers[i].setChargeState(ABORTING);
-            printlnI("Al puerto se le asigna el estado: ABORTING ");
+            Serial.println("Al puerto se le asigna el estado: ABORTING ");
         }
     }
 }
@@ -122,7 +133,7 @@ int *ChargeStation::getAvailablePorts()
     int *_available_ports = new int[_port_count];
     int i = 0;
     int j = 0;
-    for (i = 0; i < _port_count; i++)
+    for (int i = 0; i <= _port_count - 1; i++)
     {
         if (_ChargePortControllers[i].getChargeState() == IDDLE)
         {
@@ -132,6 +143,36 @@ int *ChargeStation::getAvailablePorts()
     }
 
     return _available_ports;
+}
+
+// Función de callback para manejar el cambio del evento
+void ChargeStation::handleEvent(Event event, int id_port)
+{
+    ChargeStation *obj = new ChargeStation;
+
+    switch (event)
+    {
+    case CHARGE_STARTED:
+        Serial.println("EL ESTADO DEL PUERTO ES:");
+
+        printD("EL ESTADO DEL PUERTO ES:");
+        Serial.println(obj->getState(id_port));
+        Serial.println("Charging event changed");
+        break;
+    case CHARGE_FINISHED:
+        Serial.println("Plugged event changed");
+        break;
+    case CHARGE_ABORTED:
+        Serial.println("Aborting event changed");
+        break;
+    case NOTIFY_ALARM:
+        Serial.println("Notify event alarm");
+        break;
+    case PUBLISH_TELEMETRY:
+        Serial.println("Publish telemetry event");
+    default:
+        break;
+    }
 }
 
 //* TASK

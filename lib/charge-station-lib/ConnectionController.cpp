@@ -70,7 +70,7 @@ void ConnectionController::platformConnectionInit(ConnectionType conn_type)
             if (!_wifi_controller->initWifi())
             {
                 PRINT_LOCK
-                printlnA("Wifi Not Initialized");
+                Serial.println("Wifi Not Initialized");
                 PRINT_UNLOCK
             }
             _client = _wifi_controller->_wifiClient.getClient();
@@ -83,7 +83,7 @@ void ConnectionController::platformConnectionInit(ConnectionType conn_type)
     //         if (!_sim_controller->init())
     //         {
     //             PRINT_LOCK
-    //             printlnA("SIM Not Initiliazed");
+    //             Serial.println("SIM Not Initiliazed");
     //             PRINT_UNLOCK
     //         }
     //     }
@@ -101,7 +101,7 @@ void ConnectionController::platformConnectionInit(ConnectionType conn_type)
     default:
         // wifiControllerInit();
         PRINT_LOCK
-        printlnE("UNDEFINED CONNECTION TYPE");
+        Serial.println("UNDEFINED CONNECTION TYPE");
         PRINT_UNLOCK
         break;
     }
@@ -117,7 +117,7 @@ void ConnectionController::platformConnectionInit(ConnectionType conn_type)
         _tb_handler = new ThingsBoard(*_client);
 
         PRINT_LOCK
-        printlnA("Creating ConnectionController _platformKeepConnectionAlive Task");
+        Serial.println("Creating ConnectionController _platformKeepConnectionAlive Task");
         PRINT_UNLOCK
 
         // TODO: add task handler to check if is null and prevent from repeat the task creation
@@ -165,7 +165,7 @@ void ConnectionController::_platformKeepConnectionAlive(void *args)
             {
                 obj->_setConnectionState(ConnectionState::DISCONNECTED);
                 PRINT_LOCK
-                printlnA("Network disconnected...");
+                Serial.println("Network disconnected...");
                 PRINT_UNLOCK
                 delay(2000);
                 continue;
@@ -178,14 +178,14 @@ void ConnectionController::_platformKeepConnectionAlive(void *args)
                 if (obj->_tb_handler->connect(THINGSBOARD_SERVER, TOKEN, THINGSBOARD_PORT))
                 {
                     PRINT_LOCK
-                    printlnA("Connected to ThignsBoard");
+                    Serial.println("Connected to ThignsBoard");
                     PRINT_UNLOCK
                     obj->_setConnectionState(ConnectionState::CONNECTED);
                 }
                 else
                 {
                     PRINT_LOCK
-                    printlnA("Failed to connect to ThignsBoard");
+                    Serial.println("Failed to connect to ThignsBoard");
                     PRINT_UNLOCK
 
                     delay(2000);
@@ -197,7 +197,7 @@ void ConnectionController::_platformKeepConnectionAlive(void *args)
         else
         {
             PRINT_LOCK
-            printlnA("ThingsBoard handler no created...");
+            Serial.println("ThingsBoard handler no created...");
             PRINT_UNLOCK
             delay(5000);
         }
@@ -206,7 +206,7 @@ void ConnectionController::_platformKeepConnectionAlive(void *args)
         // PRINT_LOCK
         // printA("Keep Platform Connection Task's Stack Bytes Availables: ");
         // UBaseType_t aux = uxTaskGetStackHighWaterMark(nullptr);
-        // printlnA((unsigned)aux);
+        // Serial.println((unsigned)aux);
         // PRINT_UNLOCK
     }
 }
@@ -233,7 +233,7 @@ bool ConnectionController::isPlatformConnected()
 //         return true;
 //     default:
 //         PRINT_LOCK
-//         printlnE("UNDEFINED CONNECTION TYPE");
+//         Serial.println("UNDEFINED CONNECTION TYPE");
 //         PRINT_UNLOCK
 //         break;
 //     }

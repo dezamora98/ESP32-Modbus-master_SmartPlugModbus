@@ -4,6 +4,8 @@ ChargePortController::ChargePortController()
 {
     _measurement_time = MEASUREMENT_TIME;
     _state = IDDLE;
+    // Crear un semaforo para sincronizaar el acceso a eventos
+    eventSemaphore = xSemaphoreCreateMutex();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -62,7 +64,7 @@ void ChargePortController::init(SensorMonitorInterface *sensor, int relayPin, in
 /*Iniciar la carga, es decir dejar pasar la corriente*/
 void ChargePortController::startCharge()
 {
-    printlnD("[CHARGE_CONTROLLER] Start charge");
+    Serial.println("[CHARGE_CONTROLLER] Start charge");
     digitalWrite(_relayPin, HIGH); // activar relay
     // charge_activated = true;       // se activa la carga de la toma
     is_active = true;
@@ -74,7 +76,7 @@ void ChargePortController::startCharge()
 
 void ChargePortController::stopCharge()
 {
-    printlnD("[CHARGE_CONTROLLER] Stop charge");
+    Serial.println("[CHARGE_CONTROLLER] Stop charge");
     digitalWrite(_relayPin, LOW); // desactivar relay
     is_active = false;
     BaseType_t rc = xTimerStop(_measurement_timerH, portMAX_DELAY); // detener el temporizador
@@ -105,15 +107,38 @@ float ChargePortController::getChargeCurrent()
 
 void ChargePortController::updateData()
 {
-    printlnD("[CHARGE_CONTROLLER] Update information to ThingsBoard");
+    Serial.println("[CHARGE_CONTROLLER] Update information to ThingsBoard");
 
     // TODO actualizar la informacion de la toma de carga (en caso de que se desconecte la )
 }
 
 float ChargePortController::getAcumulateConsumption() // devuelve la cantidad de kwats comsumidos
 {
-    printlnD("[CHARGE_CONTROLLER] The watts consumption is: " + String(_energy));
+    Serial.println("[CHARGE_CONTROLLER] The watts consumption is: " + String(_energy));
     return _energy;
+}
+
+void ChargePortController::generateEvent(Event event, int _id)
+{
+    // Tomar el semaforo para acceder a los eventos
+    xSemaphoreTake(eventSemaphore, portMAX_DELAY);
+
+    // Generar el evento
+    events |= (1 << event);
+
+    // Liberar el semáforo
+    xSemaphoreGive(eventSemaphore);
+
+    // Notificar el cambio del evento
+    if (eventCallback)
+    {
+        eventCallback(event, _id);
+    }
+}
+
+void ChargePortController::setEventCallback(void (*callback)(Event, int))
+{
+    eventCallback = callback;
 }
 
 // void ChargePortController::setPowerCapacity(float powerCapacity) // Cantidad de kwats a generar
@@ -133,19 +158,20 @@ void ChargePortController::_powerMeasurementTimerCallback(TimerHandle_t timer_h)
 /* ----------------- task function to control the charger ---------------- */
 void ChargePortController::ChargePortControllerTask(void *args)
 {
+    Serial.println("CHARGE_PORT_CONTROLLER task");
     ChargePortController *obj = static_cast<ChargePortController *>(args);
     float wattsConsum = 0;
 
     for (;;)
     {
-        if (digitalRead(obj->_pluggedPin)) // se conecto a la toma
-        {
-            obj->plug_in = true;
-        }
-        else
-        {
-            obj->plug_in = false;
-        }
+        // if (digitalRead(obj->_pluggedPin)) // se conecto a la toma
+        // {
+        //     obj->plug_in = true;
+        // }
+        // else
+        // {
+        //     obj->plug_in = false;
+        // }
 
         //* MAQUINA DE ESTADO
         if (obj->_state == RESERVED)
@@ -157,6 +183,7 @@ void ChargePortController::ChargePortControllerTask(void *args)
         else if (obj->_state == PLUGGED)
         {
             obj->startCharge();
+            obj->generateEvent(CHARGE_STARTED, obj->getID());
         }
         else if (obj->_state == CHARGING)
         {
@@ -183,10 +210,14 @@ void ChargePortController::ChargePortControllerTask(void *args)
         else if (obj->_state == CHARGE_COMPLETE)
         {
             obj->stopCharge();
+            obj->generateEvent(CHARGE_FINISHED, obj->getID());
         }
         else if (obj->_state == ABORTING)
         {
             obj->stopCharge();
+            obj->generateEvent(CHARGE_ABORTED, obj->getID());
+            // delay(100);
+            // obj->generateEvent(NOTIFY_ALARM);
             // TODO - Alarmas de xq se aborto
         }
     }

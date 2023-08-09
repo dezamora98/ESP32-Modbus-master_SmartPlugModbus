@@ -13,6 +13,11 @@
 
 // TODO: tener un objeto de cada RemoteInterface (A9G o TB normal)
 
+// todo
+/*[ ] Eventos en la clase portController
+  [ ] Método setEventCallback(void (*callback)(Event))
+  [ ] Como se cual tarea accedio al evento
+*/
 class ChargeStation
 {
 public:
@@ -20,6 +25,11 @@ public:
 
   ChargeStation();
   ~ChargeStation();
+
+  // RemoteInterface _remote_interface;
+  ChargePortController *_ChargePortControllers;
+  ConnectionController *conn_controller = ConnectionController::Instance();
+
   void init(int port_count, String device_name, int device_location[2]);
   void addChargePort(ChargePortController charge_port);
   void removeChargePort(int id_port);
@@ -33,11 +43,9 @@ public:
   void abortPortCharge(int id_port);
   void reservedPortCharge(int id_port);
 
-private:
-  RemoteInterface _remote_interface;
-  ChargePortController *_ChargePortControllers;
-  ConnectionController *conn_controller = ConnectionController::Instance();
+  String getDeviceName() { return _device_name; };
 
+private:
   int _port_id;
   float consumption;
   int _port_count;
@@ -45,6 +53,7 @@ private:
   int _device_location[2]; // latitud - longitud
 
   // static void ChargeStationTask(void *args);       // task function to control the charger
+  static void handleEvent(Event event, int id_port);
 };
 
 #endif
