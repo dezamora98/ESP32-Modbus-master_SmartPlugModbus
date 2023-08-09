@@ -47,7 +47,7 @@ bool RemoteInterface::init(ThingsBoard *tb_h)
         5000,
         this,
         1,
-        &_publishTelemtry_TH,
+        NULL, //&_publishTelemtry_TH,
         ARDUINO_RUNNING_CORE);
     assert(rc == pdPASS);
 
@@ -70,7 +70,7 @@ void RemoteInterface::sendDbgCounter()
     }
 }
 
-// bool RemoteInterface::sendTelemetryToPlatform(ChargeStation &charge_telem)
+// bool RemoteInterface::sendTelemetryToPlatform()
 // {
 //     if (_tb_handler != nullptr)
 //     {
@@ -192,7 +192,7 @@ void RemoteInterface::_publishTelemtryTask(void *args)
         {
             if (obj->_tb_handler->connected())
             {
-                obj->_server_connected = pdTRUE;
+                // obj->_server_connected = pdTRUE;
 
                 // if (millis() - check_for_fw_update_time >= 180000) // 3 min
 
@@ -252,11 +252,11 @@ void RemoteInterface::_publishTelemtryTask(void *args)
             {
                 if (obj->_tb_handler->connect(THINGSBOARD_SERVER, TOKEN, THINGSBOARD_PORT))
                 {
-                    obj->_on_connect();
+                    // obj->_on_connect();
                 }
                 else
                 {
-                    obj->_on_disconnect();
+                    // obj->_on_disconnect();
                 }
             }
         }
