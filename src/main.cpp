@@ -13,7 +13,6 @@ WifiController wifi_controller;
 ConnectionController *conn_controller = ConnectionController::Instance();
 ThingsBoard *tb_h;
 ChargeStation charge_station;
-// ServerController *server_controller;
 
 /*
 //* RPC
@@ -70,7 +69,7 @@ void setup()
   SerialMon.begin(SERIAL_DEBUG_BAUD);
   delay(1000);
 
-  printlnA(F("**** Setup: initializing ..."));
+  Serial.println(F("**** Setup: initializing ..."));
 
   // wifi_controller.resetWifiSettings();
 
@@ -79,9 +78,9 @@ void setup()
   //* Guardando las credenciales a la wifi a la que me voy a conectar, normalmante se realiza la config desde la web embebida
   wifi_controller.set_credentials("giselle98", "giselle123");
   wifi_controller.setAccessPoint(false);
-  delay(100);
+  delay(1000);
 
-  //* Inicializar la conexión a ThingsBoard mediante WiFi
+  // //* Inicializar la conexión a ThingsBoard mediante WiFi
   conn_controller->platformConnectionInit(ConnectionType::WIFI);
   ConnectionState con_state = conn_controller->getConnectionState();
   tb_h = conn_controller->getThingsBoardHandler();
@@ -95,28 +94,41 @@ void setup()
   socket1.init(&sensor1, Relay_1, DigitalIn_1, 1);
   socket2.init(&sensor2, Relay_2, DigitalIn_2, 2);
 
-  charge_station.addChargePort(socket1);
-  charge_station.addChargePort(socket2);
-
   int location[2] = {2, 2};
   charge_station.init(2, "STATION 1", location);
 
-  printlnA(F("*** Setup end"));
+  charge_station.addChargePort(socket1);
+  charge_station.addChargePort(socket2);
+
+  Serial.println("----------------------------------------------------");
+  Serial.println("Informacion de los puertos de carga");
+  Serial.print("PORT ID: ");
+  Serial.println(socket1.getID());
+  Serial.print("PORT ID: ");
+  Serial.println(socket2.getID());
+  Serial.print("NOMBRE DE LA ESTACION:");
+  Serial.println(charge_station.getDeviceName());
+  Serial.println("----------------------------------------------------");
+
+  Serial.println(charge_station._ChargePortControllers[1].getID());
+  Serial.println(F("*** Setup end"));
 }
 
 void loop()
 {
   // TODO Si el PIN del modo HOST esta activo levanto access point paro el resto de las comunicaciones - MODO CONFIGURACIONES
-
-  if (conn_controller->isPlatformConnected()) // si se conecto a la plataforma
-  {
-    // printlnA("CONNECTED TO THINGSBOARD");
-    // remote_interface.init(tb_h);
-    // printlnA(telemetry_data.consumption1);
-    // x = remote_interface.sendTelemetryToPlatform(telemetry_data);
-  }
-  else
-  {
-    printlnA("THINGSBOARD - DISCONNECT");
-  }
+  delay(1000);
+  charge_station.setState(1, PLUGGED);
+  Serial.println("----------------------------------------------------------------");
+  // if (conn_controller->isPlatformConnected()) // si se conecto a la plataforma
+  // {
+  //   // Serial.println("CONNECTED TO THINGSBOARD");
+  //   // remote_interface.init(tb_h);
+  //   // Serial.println(telemetry_data.consumption1);
+  //   // x = remote_interface.sendTelemetryToPlatform(telemetry_data);
+  // }
+  // else
+  // {
+  //   Serial.println("THINGSBOARD - DISCONNECT");
+  // }
 }
