@@ -90,14 +90,12 @@ void WifiClientController::_keepWifiAlive(void *args)
         {
             if (WiFi.status() == WL_CONNECTED)
             {
-                SerialMon.println("[WIFI] still connected");
-                SerialMon.print("[WIFI] Status");
-                SerialMon.println(WiFi.isConnected());
+                Serial.println("[WIFI] still connected");
                 delay(WIFI_MAX_TIME_MS_RETRY);
                 continue;
             }
 
-            SerialMon.println("[WIFI] Connecting...");
+            Serial.println("[WIFI] Connecting...");
 
             Serial.println("WIFI CLIENT Controller");
             Serial.println(obj->_ssid.c_str());

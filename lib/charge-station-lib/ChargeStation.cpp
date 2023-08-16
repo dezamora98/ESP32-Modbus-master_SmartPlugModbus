@@ -44,7 +44,6 @@ void ChargeStation::init(int port_count, String device_name, int device_location
 
 void ChargeStation::addChargePort(ChargePortController charge_port)
 {
-    int count = 0;
     if (count < _port_count)
     {
         _ChargePortControllers[count] = charge_port;
@@ -88,8 +87,8 @@ void ChargeStation::setState(int id_port, ChargePortStates state) // TODO not wo
 
     for (int i = 0; i <= _port_count - 1; i++)
     {
-        Serial.println("ID ");
-        Serial.println(_ChargePortControllers[_port_count - 1].getID());
+        Serial.print("ID>> ");
+        Serial.println(_ChargePortControllers[i].getID());
 
         if (_ChargePortControllers[i].getID() == id_port)
         {
@@ -153,8 +152,6 @@ void ChargeStation::handleEvent(Event event, int id_port)
     switch (event)
     {
     case CHARGE_STARTED:
-        Serial.println("EL ESTADO DEL PUERTO ES:");
-
         printD("EL ESTADO DEL PUERTO ES:");
         Serial.println(obj->getState(id_port));
         Serial.println("Charging event changed");

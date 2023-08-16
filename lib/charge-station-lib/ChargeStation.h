@@ -44,8 +44,10 @@ public:
   void reservedPortCharge(int id_port);
 
   String getDeviceName() { return _device_name; };
+  int getPortID(int portNumber) { return _ChargePortControllers[portNumber].getID(); };
 
 private:
+  int count = 0;
   int _port_id;
   float consumption;
   int _port_count;

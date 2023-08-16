@@ -184,6 +184,7 @@ void ChargePortController::ChargePortControllerTask(void *args)
         {
             obj->startCharge();
             obj->generateEvent(CHARGE_STARTED, obj->getID());
+            Serial.println("ENTRO AL PLUGGED    ");
         }
         else if (obj->_state == CHARGING)
         {

@@ -30,6 +30,7 @@ ChargeStation charge_station;
   - localizacion
   - temas de conexion (modo WIFI - A9)
 */
+//! NO ME FUNCIONA LA LIBRERIA DEBUG
 
 /* StateMachine behavior
     # > [x] reserve
@@ -108,9 +109,10 @@ void setup()
   Serial.println(socket2.getID());
   Serial.print("NOMBRE DE LA ESTACION:");
   Serial.println(charge_station.getDeviceName());
+  Serial.print("Imprimir el ID del Puerto 1 a traves de charge_station ");
+  Serial.println(charge_station._ChargePortControllers[0].getID());
   Serial.println("----------------------------------------------------");
 
-  Serial.println(charge_station._ChargePortControllers[1].getID());
   Serial.println(F("*** Setup end"));
 }
 
