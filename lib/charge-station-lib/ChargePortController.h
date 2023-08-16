@@ -29,8 +29,7 @@ enum ChargePortStates
 };
 
 enum Event
-{
-    CHARGE_STARTED,
+{   CHARGE_STARTED,
     CHARGE_FINISHED,
     CHARGE_ABORTED,
     NOTIFY_ALARM,
