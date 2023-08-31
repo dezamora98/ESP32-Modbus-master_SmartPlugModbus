@@ -1,74 +1,80 @@
-#ifndef TBREMOTEINTERFACE
-#define TBREMOTEINTERFACE
+#ifndef TBREMOTEINTERFACE_H
+#define TBREMOTEINTERFACE_H
+
 #pragma once
 
 #include <Arduino.h>
-// #include <TimeLib.h>
-#include <WifiClientController.h>
-#include <ChargePortController.h>
+#include <RemoteInterface.h>
+#include "charge_station_config.h"
+#include <ArduinoJson.h>
 #include <ThingsBoard.h>
-#include <ConnectionController.h>
+#include <WifiClientController.h>
+#include <WifiController.h>
+// typedef void (*callbackFunction)(void);
 
-#include <charge_station_config.h>
-
-class TBRemoteInterface
+//* Interfaz para trabajo con Thingsboard //
+class TBRemoteInterface : public RemoteInterface
 {
-
 public:
-    TBRemoteInterface();
+    friend class WifiController;
+
+    TBRemoteInterface(void (*callback)());
     ~TBRemoteInterface();
 
-    ChargePortController charge_station_controller;
-    ConnectionController *conn_controller;
-    bool init(ThingsBoard *tb_h);
+    WifiController _wifi_controller;
+    // ThingsBoard _tb_handler;
+    WifiClientController _client;
 
-    // asyncronous request
-    // pago realizado por el usuario
+    bool init() override;
 
     //* TELEMETRY
-    // bool sendTelemetryToPlatform(ChargeStation &charge_telem);
-    void sendDbgCounter();
+    // void sendPortInfo(int port, JSON &pinfo);
+    // void sendAlarm();
+    // void sendError();
+    // void sendPortStateUpdate(int port, String state);
 
-    //* Methods
+    // bool sendTelemetryToPlatform();
+
+    //* RPC
+    /* ---------------------------- PORT INFO REQUEST --------------------------- */
+    void (*func_callback)();
+    void set_callback_on_getPortInfoRequest(void (*callback)()); //! callback funtion not working
+    void handle_getPortInfoRequest();
+
+    // void set_callback_on_reservePortRequest(void(*callback)) override;
+    // void set_callback_on_abortPortRequest(void(*callback)) override;
+    // bool isConnected() override;
+    // void set_callback_on_disconnect(void(*callback)) override;
+
     void startPublishTelemetryTimer();
     void stopPublishTelemetryTimer();
     uint32_t publishTelemetryPeriod() const { return _publish_telemetry_period; }
     void setPublishTelemetryPeriod(const uint32_t &publish_telemetry_period) { _publish_telemetry_period = publish_telemetry_period; }
+    void _on_connect();
+    void _on_disconnect();
 
 private:
-    // Methods
-    bool _suscribeSharedAttributes();
-    static void _processSharedAttributeUpdate(const Shared_Attribute_Data &data);
+    Client *_network_client = nullptr;
 
+    // static callbackFunction _voidCallback;
+
+    // Methods
+    // bool _suscribeSharedAttributes();
+    /* ---------------------------------- TARK ---------------------------------- */
     static void _publishTelemtryTask(void *args);
-    static TaskHandle_t _publishTelemtry_TH;
+    static TaskHandle_t _publishTelemetry_TH;
 
     TimerHandle_t _publishTelemetry_TimerH;
     static void _publishTelemetryTimerCallback(TimerHandle_t timer_h);
 
-    void _on_connect();
-    void _on_disconnect();
-
-    ThingsBoard *_tb_handler;
-
-    static Shared_Attribute_Callback _processSharedattributesUpdate_Callback;
     TaskHandle_t _checkServerConnection_TH;
-
-    bool _rpc_subscribed;
-
-    bool _attributes_subscribed;
-
-    static bool _server_connected;
 
     uint32_t _publish_telemetry_period;
 
     BaseType_t _send_telem_timeout;
     BaseType_t _publish_telem_timer_on;
-
-    // RPC
-    RPC_Response startCharge(const RPC_Data &data);
-    // RPC_Response abortCharge(const RPC_Data &data);
-    // RPC_Response listAvailablePorts(const RPC_Data &data);
+    BaseType_t _server_connected; // pdTRUE when connected to server
+    int _server_reconnection_try_count = 0;
 };
 
 #endif

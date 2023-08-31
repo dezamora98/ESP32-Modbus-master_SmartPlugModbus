@@ -1,5 +1,5 @@
-#ifndef WIFICONTROLLER_H
-#define WIFICONTROLLER_H
+#ifndef WifiController_H
+#define WifiController_H
 
 #pragma once
 #include <Arduino.h>
@@ -18,18 +18,7 @@ public:
     WifiClientController _wifiClient;
     DNSServer _dnsServer;
 
-    WifiController() : _server(80), _ws("/ws")
-    {
-        // BaseType_t rc = xTaskCreatePinnedToCore(
-        //     updateGpioDataTask,
-        //     "updateGpioDataTask",
-        //     2048,
-        //     this,
-        //     1,
-        //     nullptr,
-        //     ARDUINO_RUNNING_CORE);
-        // assert(rc == pdPASS);
-    }
+    WifiController() : _server(80), _ws("/ws") {}
 
     bool initWifi();          // inicia la wifi ya sea en modo ap o station
     void resetWifiSettings(); //

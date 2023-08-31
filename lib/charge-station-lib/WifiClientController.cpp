@@ -85,7 +85,6 @@ void WifiClientController::_keepWifiAlive(void *args)
 
     for (;;)
     {
-        Serial.println(obj->stopTask);
         if (!obj->stopTask)
         {
             if (WiFi.status() == WL_CONNECTED)

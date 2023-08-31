@@ -15,7 +15,7 @@ public:
     bool init(const char * ssid, const char * password);
     bool isConnected();
     bool disconnect();
-    Client * getClient();
+    Client *getClient();
 
     void setStopTask(bool stop);
 

@@ -30,12 +30,12 @@ bool WifiController::initWifi()
     if (!ap_accessPoint)
     {
         WiFi.disconnect(WIFI_STA);
-        _wifiMode = WIFI_STA;
         _wifiClient.init(wifi_ssid, wifi_passw); // inicia el cliente wifi, stopTask = False
         delay(100);
-        SerialMon.println("[WIFI_CONTROLLER] WIFI station ");
+        Serial.println("[WIFI_CONTROLLER] WIFI station ");
         // _connectionManager.init(_wifiClient);
         // TODO PONER EL MODO DE CONEXION ES MEDIANTE WIFI ESTO ES EN CONNECTION CONTROLLER
+        _wifiMode = WIFI_STA;
         return false;
     }
     // ---------------------------------------------------------
@@ -54,7 +54,7 @@ bool WifiController::initWifi()
 }
 
 /**
- * @brief Initialize Server Handler
+ * @brief Initialize Server Hazndler
  *
  */
 void WifiController::initServerHandle()

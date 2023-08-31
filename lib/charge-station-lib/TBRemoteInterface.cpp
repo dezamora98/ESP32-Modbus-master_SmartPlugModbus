@@ -3,21 +3,19 @@
 
 // Shared_Attribute_Callback RemoteInterface::_processSharedattributesUpdate_Callback(_processSharedAttributeUpdate);
 
-// constexpr const char RPC_START_CHARGE_METHOD[] = "initCharge";
-// constexpr const char RPC_START_CHARGE[] = "response_start_charge_state";
 constexpr uint32_t MAX_MESSAGE_SIZE = 512U;
-constexpr uint16_t FIRMWARE_PACKET_SIZE = 4096U;
-constexpr uint8_t FIRMWARE_FAILURE_RETRIES = 5U;
-constexpr char FW_STATE_UPDATED[] = "UPDATED";
 
 constexpr const char RPC_VALVE_METHOD[] = "setValveState";
 constexpr const char RPC_VALVE_KEY[] = "response_valve_state";
 
-TBRemoteInterface *obj;
 TaskHandle_t TBRemoteInterface::_publishTelemetry_TH = nullptr;
+TBRemoteInterface *obj;
 
-TBRemoteInterface::TBRemoteInterface()
+TBRemoteInterface::TBRemoteInterface(void (*callback)())
 {
+    Serial.println("Setting callback on getPortInfoRequest");
+    Serial.println("VOIDCALLBACK::INIT!");
+    func_callback = callback;
     _server_connected = pdFALSE;
     _send_telem_timeout = pdFALSE;
     _publish_telem_timer_on = pdFALSE;
@@ -31,10 +29,15 @@ TBRemoteInterface::~TBRemoteInterface()
 bool TBRemoteInterface::init()
 {
     Serial.println("[TB_REMOTE_INTERFACE] init");
-    _connection_controller->platformConnectionInit(ConnectionType::WIFI);
-    Serial.println("[TB_REMOTE_INTERFACE] platformConnectionInit");
+    // _wifi_controller->resetWifiSettings();
 
-    _tb_handler = _connection_controller->getThingsBoardHandler();
+    // //* Guardando las credenciales a la wifi a la que me voy a conectar, normalmante se realiza la config desde la web embebida
+    _wifi_controller.set_credentials("giselle98", "giselle123"); //- Esto hay que quitarlo
+    delay(100);
+    if (!_wifi_controller.initWifi())
+    {
+        _network_client = _wifi_controller._wifiClient.getClient();
+    }
 
     bool success = true;
 
@@ -94,15 +97,15 @@ bool TBRemoteInterface::init()
 
 void TBRemoteInterface::set_callback_on_getPortInfoRequest(void (*callback)())
 {
-    getPortInfoRequestCallback = callback;
+    Serial.println("Setting callback on getPortInfoRequest");
+    Serial.println("VOIDCALLBACK::INIT!");
+    func_callback = callback;
 }
 
 void TBRemoteInterface::handle_getPortInfoRequest()
 {
-    if (getPortInfoRequestCallback)
-    {
-        getPortInfoRequestCallback();
-    }
+    Serial.println("Handle port info request");
+    (*func_callback)(); // llamar al puntero a función
 }
 
 /// @brief Processes function for RPC call "Valve Control"
@@ -110,24 +113,10 @@ void TBRemoteInterface::handle_getPortInfoRequest()
 /// @return Response that should be sent to the cloud. Useful for getMethods
 RPC_Response processValveChange(const RPC_Data &data)
 {
-    Serial.println("[SERV_MNG]-[RPC] Received the set Valve method");
+    SerialMon.println("[SERV_MNG]-[RPC] Received the set Valve method");
+    obj->handle_getPortInfoRequest();
 
-    // Process data
-    bool valve_state = data;
-    if (valve_state)
-    {
-        Serial.println("VALVULA abierta");
-    }
-    else
-    {
-        Serial.println("Valvula CERRADA");
-    }
-
-    Serial.print("Valve switch state: ");
-    Serial.println(valve_state);
-
-    // Just an response example
-    return RPC_Response(RPC_VALVE_KEY, valve_state);
+    return RPC_Response(RPC_VALVE_KEY, 1);
 }
 
 const std::array<RPC_Callback, 1U> rpc_callbacks = {
@@ -181,7 +170,7 @@ void TBRemoteInterface::_publishTelemtryTask(void *args)
 
     TBRemoteInterface *obj = static_cast<TBRemoteInterface *>(args);
     // ChargeStation *charge_telem = static_cast<ChargeStation *>(args);
-    // ThingsBoard tb(*(obj->_network_client), MAX_MESSAGE_SIZE);
+    ThingsBoard tb(*(obj->_network_client), MAX_MESSAGE_SIZE);
 
     bool rpc_subscribed = false;
 
@@ -191,13 +180,17 @@ void TBRemoteInterface::_publishTelemtryTask(void *args)
     // uint64_t send_log_time = tms;
     uint64_t retry_reconnect_time = tms;
 
+    bool should_retry_reconnect = true;
+    bool first_reconnect_attempt = true;
+
     SerialMon.println("[REMOTE_INTERFACE] _sendTelemetry task running...");
+    obj->_server_reconnection_try_count = 0;
 
     for (;;)
     {
         if (obj->_client.isConnected())
         {
-            if (obj->_tb_handler->connected())
+            if (tb.connected())
             {
                 obj->_server_connected = pdTRUE;
 
@@ -211,11 +204,12 @@ void TBRemoteInterface::_publishTelemtryTask(void *args)
                 if (!rpc_subscribed)
                 {
                     Serial.println("Subscribing for RPC...");
-                    if (!obj->_tb_handler->RPC_Subscribe(rpc_callbacks.cbegin(), rpc_callbacks.cend()))
+                    if (!tb.RPC_Subscribe(rpc_callbacks.cbegin(), rpc_callbacks.cend()))
                     {
                         Serial.println("Failed to subscribe for RPC");
                     }
                     Serial.println("Subscribe done");
+
                     rpc_subscribed = true;
                 }
 
@@ -230,16 +224,15 @@ void TBRemoteInterface::_publishTelemtryTask(void *args)
 
                     if (values)
                     {
-                        obj->_tb_handler->sendTelemetryFloat("ain_1", 12);
-                        Serial.println("[REMOTE_INTERFACE] Socket1:");
+                        tb.sendTelemetryFloat("ain_1", 5);
                     }
                 }
 
-                obj->_tb_handler->loop();
+                tb.loop();
             }
             else
             {
-                if (obj->_tb_handler->connect(THINGSBOARD_SERVER, TOKEN, THINGSBOARD_PORT))
+                if (tb.connect(THINGSBOARD_SERVER, TOKEN, THINGSBOARD_PORT))
                 {
                     obj->_on_connect();
                 }
