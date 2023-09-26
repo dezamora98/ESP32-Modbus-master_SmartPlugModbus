@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "*.cpp": "cpp",
+        "freertos.h": "c",
+        "esp_log.h": "c",
+        "sdkconfig.h": "c",
+        "mbcontroller.h": "c",
+        "smartplugmodbus.h": "c",
+        "esp_modbus_master.h": "c",
+        "string.h": "c",
+        "uart.h": "c",
+        "esp_modbus_common.h": "c"
+    }
+}
