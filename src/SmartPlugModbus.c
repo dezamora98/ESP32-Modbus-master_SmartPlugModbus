@@ -3,7 +3,7 @@
 esp_err_t SmartPlugModbus_init(SmartPlugModbus_t *slave, uint8_t *CID_count, const uint8_t ID)
 {
     slave->ID = ID;
-    slave->mb_descriptor[0] = (mb_parameter_descriptor_t){
+    slave->Coil_descriptor = (mb_parameter_descriptor_t){
         .cid = (*CID_count)++,
         .param_key = "COILS",
         .param_units = "ON/OFF",
@@ -23,7 +23,7 @@ esp_err_t SmartPlugModbus_init(SmartPlugModbus_t *slave, uint8_t *CID_count, con
         .access = PAR_PERMS_READ_WRITE_TRIGGER,
     };
 
-    slave->mb_descriptor[1] = (mb_parameter_descriptor_t){
+    slave->Holding_descriptor = (mb_parameter_descriptor_t){
         .cid = (*CID_count)++,
         .param_key = "HOLDING_REG",
         .param_units = "UINT16",
@@ -43,7 +43,7 @@ esp_err_t SmartPlugModbus_init(SmartPlugModbus_t *slave, uint8_t *CID_count, con
         .access = PAR_PERMS_READ_WRITE_TRIGGER,
     };
 
-    slave->mb_descriptor[2] = (mb_parameter_descriptor_t){
+    slave->Input_descriptor = (mb_parameter_descriptor_t){
         .cid = (*CID_count)++,
         .param_key = "INPUT_REG",
         .param_units = "UINT16",
@@ -69,10 +69,9 @@ esp_err_t SmartPlugModbus_update(SmartPlugModbus_t *slave)
 {
     esp_err_t err = ESP_OK;
     uint8_t type = 0;
-    err = mbc_master_get_parameter(slave->mb_descriptor[0].cid, slave->mb_descriptor[0].param_key, &(slave->Coil.Array), &type);
+    err = mbc_master_get_parameter(slave->Coil_descriptor.cid, (char*)(slave->Coil_descriptor.param_key), &(slave->Coil.Array), &type);
     if (err == ESP_OK)
     {
-<<<<<<< HEAD
         ESP_LOGE("MODBUS", "SPM-%d -> Plug_0 = %d", slave->ID, slave->Coil.Plug_0);
         ESP_LOGE("MODBUS", "SPM-%d -> Plug_1 = %d", slave->ID, slave->Coil.Plug_1);
         ESP_LOGE("MODBUS", "SPM-%d -> Plug_2 = %d", slave->ID, slave->Coil.Plug_2);
@@ -80,42 +79,26 @@ esp_err_t SmartPlugModbus_update(SmartPlugModbus_t *slave)
         ESP_LOGE("MODBUS", "SPM-%d -> Plug_4 = %d", slave->ID, slave->Coil.Plug_4);
         ESP_LOGE("MODBUS", "SPM-%d -> Plug_5 = %d", slave->ID, slave->Coil.Plug_5);
         ESP_LOGE("MODBUS", "SPM-%d -> Reset = %d", slave->ID, slave->Coil.Reset);
-=======
-        ESP_LOGE(TAG, "Plug_0 = %d", slave->Coil.Plug_0);
-        ESP_LOGE(TAG, "Plug_1 = %d", slave->Coil.Plug_1);
-        ESP_LOGE(TAG, "Plug_2 = %d", slave->Coil.Plug_2);
-        ESP_LOGE(TAG, "Plug_3 = %d", slave->Coil.Plug_3);
-        ESP_LOGE(TAG, "Plug_4 = %d", slave->Coil.Plug_4);
-        ESP_LOGE(TAG, "Plug_5 = %d", slave->Coil.Plug_5);
-        ESP_LOGE(TAG, "Reset = %d", slave->Coil.Reset);
->>>>>>> febc641756897274065f80482578d71acdc252ac
     }
 
     type = 0;
-    err = mbc_master_get_parameter(slave->mb_descriptor[1].cid, slave->mb_descriptor[1].param_key, (uint8_t *)(slave->HoldingReg.Array), &type);
+    err = mbc_master_get_parameter(slave->Holding_descriptor.cid, (char*)(slave->Holding_descriptor.param_key), (uint8_t *)(slave->HoldingReg.Array), &type);
     if (err == ESP_OK)
     {
         for (uint8_t i = 0; i != SIZE_HoldingReg; ++i)
         {
-<<<<<<< HEAD
-            ESP_LOGE("MODBUS", "SPM-%d -> HOLING_%d = %d", slave->ID, i, slave->HoldingReg.Array[i]);
-=======
-            ESP_LOGE(TAG, "HOLING_%d = %d", i, slave->HoldingReg.Array[i]);
->>>>>>> febc641756897274065f80482578d71acdc252ac
+
+            ESP_LOGE("MODBUS", "SPM-%d -> HOLING_%d = %d", slave->ID, i, slave->HoldingReg.Array[i]); 
         }
     }
 
     type = 0;
-    err = mbc_master_get_parameter(slave->mb_descriptor[2].cid, slave->mb_descriptor[2].param_key, (uint8_t *)(slave->InputReg.Array), &type);
+    err = mbc_master_get_parameter(slave->Input_descriptor.cid, (char*)(slave->Input_descriptor.param_key), (uint8_t *)(slave->InputReg.Array), &type);
     if (err == ESP_OK)
     {
         for (uint8_t i = 0; i != SIZE_InputReg; ++i)
         {
-<<<<<<< HEAD
             ESP_LOGE("MODBUS", "SPM-%d -> INPUT_%d = %d", slave->ID, i, slave->InputReg.Array[i]);
-=======
-            ESP_LOGE(TAG, "INPUT_%d = %d", i, slave->InputReg.Array[i]);
->>>>>>> febc641756897274065f80482578d71acdc252ac
         }
     }
 

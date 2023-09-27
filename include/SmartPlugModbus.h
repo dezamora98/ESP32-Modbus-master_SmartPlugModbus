@@ -58,7 +58,19 @@ typedef struct
     HoldingReg_t HoldingReg;
     InputReg_t InputReg;
 
-    mb_parameter_descriptor_t mb_descriptor[3];
+    union
+    {
+       mb_parameter_descriptor_t mb_descriptor[3];
+       struct
+       {
+            mb_parameter_descriptor_t Coil_descriptor;
+            mb_parameter_descriptor_t Holding_descriptor;
+            mb_parameter_descriptor_t Input_descriptor;
+       };
+       
+    };
+    
+    
 }SmartPlugModbus_t;
 
 esp_err_t SmartPlugModbus_init(SmartPlugModbus_t* slave, uint8_t* CID_count, const uint8_t ID);
