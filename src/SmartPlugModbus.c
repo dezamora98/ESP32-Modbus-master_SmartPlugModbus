@@ -72,6 +72,7 @@ esp_err_t SmartPlugModbus_update(SmartPlugModbus_t *slave)
     err = mbc_master_get_parameter(slave->mb_descriptor[0].cid, slave->mb_descriptor[0].param_key, &(slave->Coil.Array), &type);
     if (err == ESP_OK)
     {
+<<<<<<< HEAD
         ESP_LOGE("MODBUS", "SPM-%d -> Plug_0 = %d", slave->ID, slave->Coil.Plug_0);
         ESP_LOGE("MODBUS", "SPM-%d -> Plug_1 = %d", slave->ID, slave->Coil.Plug_1);
         ESP_LOGE("MODBUS", "SPM-%d -> Plug_2 = %d", slave->ID, slave->Coil.Plug_2);
@@ -79,6 +80,15 @@ esp_err_t SmartPlugModbus_update(SmartPlugModbus_t *slave)
         ESP_LOGE("MODBUS", "SPM-%d -> Plug_4 = %d", slave->ID, slave->Coil.Plug_4);
         ESP_LOGE("MODBUS", "SPM-%d -> Plug_5 = %d", slave->ID, slave->Coil.Plug_5);
         ESP_LOGE("MODBUS", "SPM-%d -> Reset = %d", slave->ID, slave->Coil.Reset);
+=======
+        ESP_LOGE(TAG, "Plug_0 = %d", slave->Coil.Plug_0);
+        ESP_LOGE(TAG, "Plug_1 = %d", slave->Coil.Plug_1);
+        ESP_LOGE(TAG, "Plug_2 = %d", slave->Coil.Plug_2);
+        ESP_LOGE(TAG, "Plug_3 = %d", slave->Coil.Plug_3);
+        ESP_LOGE(TAG, "Plug_4 = %d", slave->Coil.Plug_4);
+        ESP_LOGE(TAG, "Plug_5 = %d", slave->Coil.Plug_5);
+        ESP_LOGE(TAG, "Reset = %d", slave->Coil.Reset);
+>>>>>>> febc641756897274065f80482578d71acdc252ac
     }
 
     type = 0;
@@ -87,7 +97,11 @@ esp_err_t SmartPlugModbus_update(SmartPlugModbus_t *slave)
     {
         for (uint8_t i = 0; i != SIZE_HoldingReg; ++i)
         {
+<<<<<<< HEAD
             ESP_LOGE("MODBUS", "SPM-%d -> HOLING_%d = %d", slave->ID, i, slave->HoldingReg.Array[i]);
+=======
+            ESP_LOGE(TAG, "HOLING_%d = %d", i, slave->HoldingReg.Array[i]);
+>>>>>>> febc641756897274065f80482578d71acdc252ac
         }
     }
 
@@ -97,7 +111,11 @@ esp_err_t SmartPlugModbus_update(SmartPlugModbus_t *slave)
     {
         for (uint8_t i = 0; i != SIZE_InputReg; ++i)
         {
+<<<<<<< HEAD
             ESP_LOGE("MODBUS", "SPM-%d -> INPUT_%d = %d", slave->ID, i, slave->InputReg.Array[i]);
+=======
+            ESP_LOGE(TAG, "INPUT_%d = %d", i, slave->InputReg.Array[i]);
+>>>>>>> febc641756897274065f80482578d71acdc252ac
         }
     }
 
