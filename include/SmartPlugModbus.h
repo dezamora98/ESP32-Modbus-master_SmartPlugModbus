@@ -21,9 +21,9 @@
 #define POLL_TIMEOUT_TICS (POLL_TIMEOUT_MS / portTICK_PERIOD_MS)
 
 // The macro to get offset for parameter in the appropriate structure
-#define HOLD_OFFSET(field) ((uint16_t)(offsetof(t_HoldingReg, field) + 1))
-#define INPUT_OFFSET(field) ((uint16_t)(offsetof(t_InputReg, field) + 1))
-#define COIL_OFFSET(field) ((uint16_t)(offsetof(t_Coil, field) + 1))
+#define HOLD_OFFSET(field) ((uint16_t)(offsetof(HoldingReg_t, field) + 1))
+#define INPUT_OFFSET(field) ((uint16_t)(offsetof(InputReg_t, field) + 1))
+#define COIL_OFFSET(field) ((uint16_t)(offsetof(Coil_t, field) + 1))
 
 #define STR(fieldname) ((const char *)(fieldname))
 
@@ -45,64 +45,25 @@ enum
 // Enumeration of all supported CIDs for device (used in parameter definition table)
 enum
 {
-    CID_Plug_0 = 0,
-    CID_Plug_1,
-    CID_Plug_2,
-    CID_Plug_3,
-    CID_Plug_4,
-    CID_Plug_5,
-    CID_Reset,
-
-    CID_Param_PlugOverCurrent,
-    CID_Param_PlugLowCurrent,
-    CID_Param_OverVoltage,
-    CID_Param_LowVoltage,
-
-    CID_Param_HighTemperature,
-    CID_Param_SystemOverCurrent,
-    CID_Param_SlaveID,
-
-    CID_Param_TimeoutPlugLowCurrent,
-    CID_Param_TimeoutPlugOverCurrent,
-    CID_Param_TimeoutLowVoltage,
-    CID_Param_TimeoutOverVoltage,
-    CID_Param_TimeoutHighTemperature,
-
-    CID_Reg_SystemState,
-    CID_Reg_PlugState_0,
-    CID_Reg_PlugState_1,
-    CID_Reg_PlugState_2,
-    CID_Reg_PlugState_3,
-    CID_Reg_PlugState_4,
-    CID_Reg_PlugState_5,
-
-    // analog registers
-    CID_Reg_PlugCurrent_0,
-    CID_Reg_PlugCurrent_1,
-    CID_Reg_PlugCurrent_2,
-    CID_Reg_PlugCurrent_3,
-    CID_Reg_PlugCurrent_4,
-    CID_Reg_PlugCurrent_5,
-    CID_Reg_Voltage,
-    CID_Reg_BoardCurrent,
-    CID_Reg_TempMCU,
+    CID_COILS = 0,
+    CID_INPUTS = 3,
+    CID_HOLDING_REG = 1,
+    CID_INPUT_REG = 2,
 };
 
-// { CID, Param Name, Units, Modbus Slave Addr, Modbus Reg Type, Reg Start, Reg Size, Instance Offset, Data Type, Data Size, Parameter Options, Access Mode}
-const mb_parameter_descriptor_t device_parameters[] = {
-    {.cid = CID_Param_HighTemperature,
-     .param_key = STR("HOLDING"),
-     .param_units = STR("N"),
-     .mb_slave_addr = ADDR_SmartPlugModbus_0,
-     .mb_param_type = MB_PARAM_HOLDING,
-     .mb_reg_start = InitAddr_HoldingReg,
-     .mb_size = SIZE_HoldingReg,
-     .param_offset = InitAddr_HoldingReg,
-     .param_type = PARAM_TYPE_U16,
-     .param_opts = {.min = 0, .max = 0x3ff, .step = 1},
-     .access = PAR_PERMS_READ_WRITE_TRIGGER}};
+typedef struct 
+{
+    uint8_t ID;
+    Coil_t Coil;
+    HoldingReg_t HoldingReg;
+    InputReg_t InputReg;
+
+    mb_parameter_descriptor_t mb_descriptor[3];
+}SmartPlugModbus_t;
+
+esp_err_t SmartPlugModbus_init(SmartPlugModbus_t* slave, uint8_t* CID_count, const uint8_t ID);
+esp_err_t SmartPlugModbus_update(SmartPlugModbus_t* slave);
 
 // Calculate number of parameters in the table
-const uint16_t num_device_parameters = (sizeof(device_parameters) / sizeof(device_parameters[0]));
 
 #endif // !SMART_PLUG_MODBUS_H

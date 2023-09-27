@@ -9,6 +9,9 @@
         "esp_modbus_master.h": "c",
         "string.h": "c",
         "uart.h": "c",
-        "esp_modbus_common.h": "c"
+        "esp_modbus_common.h": "c",
+        "random": "c",
+        "limits": "c",
+        "modbusstruct.h": "c"
     }
 }

@@ -18,7 +18,7 @@
  * typedef struct
  * {
  *     uint8_t Array[(SIZE_Coil + 7) / 8];
- * } t_Coil;
+ * } Coil_t;
  *
  * typedef struct
  * {
@@ -33,7 +33,7 @@
  *         uint16_t Array[SIZE_HoldingReg];
  *         // variables contained in the array in an ordered form
  *     };
- * } t_HoldingReg;
+ * } HoldingReg_t;
  *
  * typedef struct
  * {
@@ -42,7 +42,7 @@
  *         uint16_t Array[SIZE_InputReg];
  *         // variables contained in the array in an ordered form
  *     };
- * } t_InputReg;
+ * } InputReg_t;
  *
  * @endcond
  */
@@ -54,12 +54,29 @@
 #include <stdint.h>
 
 /// @brief this structure is used to define the modbus slave coils.
+#pragma pack(push, 1)
 typedef struct
 {
-    uint8_t Array[(SIZE_Coil + 7) / 8];
-} t_Coil;
+    union
+    {
+        uint8_t Array;
+        struct
+        {
+            uint8_t Plug_0 : 1;
+            uint8_t Plug_1 : 1;
+            uint8_t Plug_2 : 1;
+            uint8_t Plug_3 : 1;
+            uint8_t Plug_4 : 1;
+            uint8_t Plug_5 : 1;
+            uint8_t Reset : 1;
+        };
+    };
+
+} Coil_t;
+#pragma pack(pop)
 
 /// @brief this structure is used to define the modbus slave holding registers.
+#pragma pack(push, 1)
 typedef struct
 {
     union
@@ -94,9 +111,12 @@ typedef struct
             uint16_t TimeoutHighTemperature;
         };
     };
-} t_HoldingReg;
+} HoldingReg_t;
+#pragma pack(pop)
 
 /// @brief this structure is used to define the modbus slave input registers.
+#pragma pack(push, 1)
+
 typedef struct
 {
     union
@@ -126,12 +146,9 @@ typedef struct
             };
         };
     };
-} t_InputReg;
+} InputReg_t;
+#pragma pack(pop)
 
 /*****************************************************************************************************/
-
-extern t_HoldingReg HoldingReg = {0};
-extern t_InputReg InputReg = {0};
-extern t_Coil Coil = {0};
 
 #endif // !MODBUS_STRUCT_H
