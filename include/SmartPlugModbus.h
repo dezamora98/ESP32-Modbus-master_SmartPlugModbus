@@ -75,6 +75,7 @@ typedef struct
 
 esp_err_t SmartPlugModbus_init(SmartPlugModbus_t* slave, uint8_t* CID_count, const uint8_t ID);
 esp_err_t SmartPlugModbus_update(SmartPlugModbus_t* slave);
+void SmartPlugModbus_Tasck(void *)
 
 // Calculate number of parameters in the table
 
