@@ -12,6 +12,7 @@
         "esp_modbus_common.h": "c",
         "random": "c",
         "limits": "c",
-        "modbusstruct.h": "c"
+        "modbusstruct.h": "c",
+        "rtc.h": "c"
     }
 }

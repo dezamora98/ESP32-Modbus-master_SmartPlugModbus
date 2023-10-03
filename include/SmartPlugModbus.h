@@ -2,6 +2,8 @@
 
 #include "mbcontroller.h"
 #include "ModbusStruct.h"
+#include <esp32/rtc.h>
+#include <freertos/semphr.h>
 
 // Note: Some pins on target chip cannot be assigned for UART communication.
 // See UART documentation for selected board and target to configure pins using Kconfig.
@@ -57,6 +59,7 @@ typedef struct
     Coil_t Coil;
     HoldingReg_t HoldingReg;
     InputReg_t InputReg;
+    SemaphoreHandle_t sem;
 
     union
     {
@@ -73,9 +76,19 @@ typedef struct
     
 }SmartPlugModbus_t;
 
+typedef struct 
+{
+    SmartPlugModbus_t* SPM;
+    uint8_t size;
+}SmartPlugModbus_Array_t;
+
+
+
 esp_err_t SmartPlugModbus_init(SmartPlugModbus_t* slave, uint8_t* CID_count, const uint8_t ID);
+esp_err_t SmartPlugModbus_GetAll(SmartPlugModbus_t* slave);
 esp_err_t SmartPlugModbus_update(SmartPlugModbus_t* slave);
-void SmartPlugModbus_Tasck(void *)
+void SmartPlugModbus_Task(void *SMP_ARRAY);
+#define PlugON
 
 // Calculate number of parameters in the table
 
