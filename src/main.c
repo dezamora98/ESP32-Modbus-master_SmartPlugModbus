@@ -35,24 +35,18 @@ void app_main(void)
     ESP_ERROR_CHECK(uart_set_pin(UART_NUM_2, 22, 23, 0, 0));
     ESP_ERROR_CHECK(mbc_master_init(MB_PORT_SERIAL_MASTER, &modbus_h));
     ESP_ERROR_CHECK(mbc_master_setup((void *)&mb_info));
-    ESP_LOGE(TAG, "Master configurado");
+    ESP_LOGE("MAIN", "Master configurado");
     ESP_ERROR_CHECK(SmartPlugModbus_init(&slave_0, &CID_count, 1));
-    ESP_LOGE(TAG, "Descriptor de test iniciado ");
+    ESP_LOGE("MAIN", "Descriptor de test iniciado ");
     ESP_ERROR_CHECK(mbc_master_start());
 
-    uint8_t type = 0;
     xTaskCreate(SmartPlugModbus_Task, "SPM-Task", 8192, &SPM_ARRAY, tskIDLE_PRIORITY + 1, &SPM_task);
     while (true)
     {
         for (uint8_t i = 0; i <= ADDR_Plug_5; ++i)
         {
-            if(xSemaphoreTake(SPM_ARRAY.SPM->sem,portMAX_DELAY) == pdTRUE)
-            {
-                SPM_ARRAY.SPM->Coil.Array= (1<<i);
-                xSemaphoreGive(SPM_ARRAY.SPM->sem);
-            }
-            
-            vTaskDelay(pdMS_TO_TICKS(500));
+            SmartPlugModbus_PlugOn(&slave_0,i,0xFFFF,3);
+            vTaskDelay(pdMS_TO_TICKS(5000));
         }
     }
 

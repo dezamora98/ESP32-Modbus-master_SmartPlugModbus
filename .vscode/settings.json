@@ -13,6 +13,7 @@
         "random": "c",
         "limits": "c",
         "modbusstruct.h": "c",
-        "rtc.h": "c"
+        "rtc.h": "c",
+        "numbers": "c"
     }
 }

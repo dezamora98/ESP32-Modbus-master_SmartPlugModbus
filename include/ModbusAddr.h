@@ -158,6 +158,6 @@ typedef enum
     st_SystemOverCurrent,
     st_HighTemterature,
     st_UndefinedError
-} PlugState;
+} PlugState_t;
 
 #endif // !MODBUS_ADDR_H

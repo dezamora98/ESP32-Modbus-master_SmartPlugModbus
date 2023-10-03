@@ -1,5 +1,6 @@
 #include "SmartPlugModbus.h"
 #include <freertos/semphr.h>
+#include <esp_system.h>
 
 esp_err_t SmartPlugModbus_init(SmartPlugModbus_t *slave, uint8_t *CID_count, const uint8_t ID)
 {
@@ -64,6 +65,11 @@ esp_err_t SmartPlugModbus_init(SmartPlugModbus_t *slave, uint8_t *CID_count, con
     };
 
     slave->sem = xSemaphoreCreateMutex();
+
+    for (uint8_t i = 0; i < 6; ++i)
+    {
+        slave->Plugs[i].State = &slave->InputReg.PlugState[i];
+    }
     return mbc_master_set_descriptor(slave->mb_descriptor, 3);
 }
 
@@ -110,7 +116,7 @@ esp_err_t SmartPlugModbus_update(SmartPlugModbus_t *slave)
     esp_err_t err = ESP_OK;
     uint8_t type = 0;
     SmartPlugModbus_t temp_slave = *slave;
-    
+
     ESP_LOGE("MODBUS", "=========================GET_ALL_SLAVE=========================");
     err = SmartPlugModbus_GetAll(&temp_slave);
     ESP_LOGE("MODBUS", "=======================END_GET_ALL_SLAVE=======================");
@@ -145,17 +151,64 @@ esp_err_t SmartPlugModbus_update(SmartPlugModbus_t *slave)
 
 void SmartPlugModbus_Task(void *SMP_ARRAY)
 {
+#define SPM_A_ptr ((SmartPlugModbus_Array_t *)SMP_ARRAY)
     while (true)
     {
-        if (xSemaphoreTake(((SmartPlugModbus_Array_t *)SMP_ARRAY)->SPM->sem, portMAX_DELAY) == pdTRUE)
-        {
-            for (uint8_t i = 0; i < ((SmartPlugModbus_Array_t *)SMP_ARRAY)->size; ++i)
-            {
 
-                SmartPlugModbus_update(&(((SmartPlugModbus_Array_t *)SMP_ARRAY)->SPM[i]));
+        for (uint8_t i = 0; i < SPM_A_ptr->size; ++i)
+        {
+            if (xSemaphoreTake(SPM_A_ptr->SPM[i].sem, portMAX_DELAY) == pdTRUE)
+            {
+                SmartPlugModbus_update(&(SPM_A_ptr->SPM[i]));
+                for (uint j = 0; j < 6; ++j)
+                {
+                    if (SmartPlugModbus_get_PlugState(SPM_A_ptr->SPM[i], j) == st_On)
+                    {
+                        SPM_A_ptr->SPM[i].Plugs[j].Tic = esp_rtc_get_time_us();
+                        SPM_A_ptr->SPM[i].Plugs[j].Power += SmartPlugModbus_get_PlugPower(SPM_A_ptr->SPM[i], j, Voltage);
+
+                        if (SPM_A_ptr->SPM[i].Plugs[j].Power >= SPM_A_ptr->SPM[i].Plugs[j].PowerLimit ||
+                            SPM_A_ptr->SPM[i].Plugs[j].Tic >= SPM_A_ptr->SPM[i].Plugs[j].TimeOut)
+                        {
+                            SPM_A_ptr->SPM[i].Coil.Array &= ~(1 << j);
+                        }
+                    }
+                }
             }
-            xSemaphoreGive(((SmartPlugModbus_Array_t *)SMP_ARRAY)->SPM->sem);
+
+            xSemaphoreGive(SPM_A_ptr->SPM->sem);
         }
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
+
+void SmartPlugModbus_PlugOn(SmartPlugModbus_t *slave, uint8_t addr, float power, uint64_t timeout)
+{
+    if (xSemaphoreTake(slave->sem, portMAX_DELAY) == pdTRUE)
+    {
+        slave->Plugs[addr].Power = 0;
+        slave->Plugs[addr].PowerLimit = power;
+        slave->Plugs[addr].Tic = esp_rtc_get_time_us();
+        slave->Plugs[addr].TimeOut = esp_rtc_get_time_us() + (timeout * 1000);
+        slave->Coil.Array |= (1 << addr);
+        xSemaphoreGive(slave->sem);
+    }
+}
+
+void SmartPlugModbus_PlugOff(SmartPlugModbus_t *slave, uint8_t addr)
+{
+    if (xSemaphoreTake(slave->sem, portMAX_DELAY) == pdTRUE)
+    {
+        slave->Coil.Array &= ~(1 << addr);
+        xSemaphoreGive(slave->sem);
+    }
+}
+
+void SmartPlugModbus_set_Holding(SmartPlugModbus_t *slave, uint8_t addr, uint16_t val)
+{
+    if (xSemaphoreTake(slave->sem, portMAX_DELAY) == pdTRUE)
+    {
+        slave->HoldingReg.Array[addr] = val;
+        xSemaphoreGive(slave->sem);
     }
 }

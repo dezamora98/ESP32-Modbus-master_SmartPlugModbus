@@ -5,6 +5,8 @@
 #include <esp32/rtc.h>
 #include <freertos/semphr.h>
 
+#define Voltage 110
+
 // Note: Some pins on target chip cannot be assigned for UART communication.
 // See UART documentation for selected board and target to configure pins using Kconfig.
 
@@ -23,11 +25,6 @@
 #define POLL_TIMEOUT_TICS (POLL_TIMEOUT_MS / portTICK_PERIOD_MS)
 
 // The macro to get offset for parameter in the appropriate structure
-#define HOLD_OFFSET(field) ((uint16_t)(offsetof(HoldingReg_t, field) + 1))
-#define INPUT_OFFSET(field) ((uint16_t)(offsetof(InputReg_t, field) + 1))
-#define COIL_OFFSET(field) ((uint16_t)(offsetof(Coil_t, field) + 1))
-
-#define STR(fieldname) ((const char *)(fieldname))
 
 // Options can be used as bit masks or parameter limits
 #define OPTS(min_val, max_val, step_val)                   \
@@ -35,8 +32,6 @@
     {                                                      \
         .opt1 = min_val, .opt2 = max_val, .opt3 = step_val \
     }
-
-static const char *TAG = "MASTER_TEST";
 
 // Enumeration of modbus device addresses accessed by master device
 enum
@@ -53,42 +48,54 @@ enum
     CID_INPUT_REG = 2,
 };
 
-typedef struct 
+typedef struct
+{
+    float Power;
+    float PowerLimit;
+    uint64_t Tic;
+    uint64_t TimeOut;
+    PlugState_t* State;
+} Plug_t;
+
+#pragma pack(push, 1)
+typedef struct
 {
     uint8_t ID;
     Coil_t Coil;
     HoldingReg_t HoldingReg;
     InputReg_t InputReg;
     SemaphoreHandle_t sem;
+    Plug_t Plugs[5];
 
     union
     {
-       mb_parameter_descriptor_t mb_descriptor[3];
-       struct
-       {
+        mb_parameter_descriptor_t mb_descriptor[3];
+        struct
+        {
             mb_parameter_descriptor_t Coil_descriptor;
             mb_parameter_descriptor_t Holding_descriptor;
             mb_parameter_descriptor_t Input_descriptor;
-       };
-       
+        };
     };
-    
-    
-}SmartPlugModbus_t;
 
-typedef struct 
+} SmartPlugModbus_t;
+#pragma pack(pop)
+
+typedef struct
 {
-    SmartPlugModbus_t* SPM;
+    SmartPlugModbus_t *SPM;
     uint8_t size;
-}SmartPlugModbus_Array_t;
+} SmartPlugModbus_Array_t;
 
-
-
-esp_err_t SmartPlugModbus_init(SmartPlugModbus_t* slave, uint8_t* CID_count, const uint8_t ID);
-esp_err_t SmartPlugModbus_GetAll(SmartPlugModbus_t* slave);
-esp_err_t SmartPlugModbus_update(SmartPlugModbus_t* slave);
+esp_err_t SmartPlugModbus_init(SmartPlugModbus_t *slave, uint8_t *CID_count, const uint8_t ID);
+esp_err_t SmartPlugModbus_GetAll(SmartPlugModbus_t *slave);
+esp_err_t SmartPlugModbus_update(SmartPlugModbus_t *slave);
 void SmartPlugModbus_Task(void *SMP_ARRAY);
-#define PlugON
+#define SmartPlugModbus_get_PlugState(slave, addr) slave.InputReg.PlugState[addr]
+#define SmartPlugModbus_get_PlugPower(slave, addr, voltage) slave.InputReg.PlugCurrent[addr] * voltage
+void SmartPlugModbus_PlugOn(SmartPlugModbus_t *slave, uint8_t addr, float power, uint64_t timeout);
+void SmartPlugModbus_PlugOff(SmartPlugModbus_t *slave, uint8_t addr);
+void SmartPlugModbus_set_Holding(SmartPlugModbus_t *slave, uint8_t addr, uint16_t val);
 
 // Calculate number of parameters in the table
 
