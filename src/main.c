@@ -25,7 +25,7 @@ void app_main(void)
             .port = UART_NUM_2,
 
         };
-    SmartPlugModbus_t slave_0;
+    SmartPlugModbus_t slave_0 = {0};
     SmartPlugModbus_Array_t SPM_ARRAY =
         {
             .SPM = &slave_0,
@@ -39,7 +39,7 @@ void app_main(void)
     ESP_ERROR_CHECK(SmartPlugModbus_init(&slave_0, &CID_count, 1));
     ESP_LOGE("MAIN", "Descriptor de test iniciado ");
     ESP_ERROR_CHECK(mbc_master_start());
-
+    SmartPlugModbus_GetAll(&slave_0);
     xTaskCreate(SmartPlugModbus_Task, "SPM-Task", 8192, &SPM_ARRAY, tskIDLE_PRIORITY + 1, &SPM_task);
     while (true)
     {

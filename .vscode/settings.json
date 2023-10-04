@@ -14,6 +14,18 @@
         "limits": "c",
         "modbusstruct.h": "c",
         "rtc.h": "c",
-        "numbers": "c"
+        "numbers": "c",
+        "array": "c",
+        "*.tcc": "c",
+        "memory": "c",
+        "istream": "c",
+        "functional": "c",
+        "tuple": "c",
+        "utility": "c",
+        "esp_system.h": "c",
+        "semphr.h": "c",
+        "esp_crt_bundle.h": "c",
+        "esp_timer.h": "c",
+        "timers.h": "c"
     }
 }

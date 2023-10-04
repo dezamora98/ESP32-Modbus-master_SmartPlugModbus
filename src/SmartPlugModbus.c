@@ -68,7 +68,7 @@ esp_err_t SmartPlugModbus_init(SmartPlugModbus_t *slave, uint8_t *CID_count, con
 
     for (uint8_t i = 0; i < 6; ++i)
     {
-        slave->Plugs[i].State = &slave->InputReg.PlugState[i];
+        slave->Plugs[i].State = &(slave->InputReg.PlugState[i]);
     }
     return mbc_master_set_descriptor(slave->mb_descriptor, 3);
 }
@@ -121,6 +121,18 @@ esp_err_t SmartPlugModbus_update(SmartPlugModbus_t *slave)
     err = SmartPlugModbus_GetAll(&temp_slave);
     ESP_LOGE("MODBUS", "=======================END_GET_ALL_SLAVE=======================");
 
+    if ((slave->Coil.Array & 0x3f) != (temp_slave.Coil.Array & 0x3f))
+    {
+        slave->Coil.Array &= 0x3f;
+        ESP_LOGE("MODBUS", "=========================SET_COIL_SLAVE=========================");
+        err = mbc_master_set_parameter(slave->Coil_descriptor.cid, (char *)slave->Coil_descriptor.param_key, &slave->Coil.Array, &type);
+        if (err != ESP_OK)
+        {
+            return err;
+        }
+        ESP_LOGE("MODBUS", "=======================END_SET_COIL_SLAVE=======================");
+    }
+
     if (memcmp(&slave->HoldingReg, &temp_slave.HoldingReg, SIZE_HoldingReg) != 0)
     {
         ESP_LOGE("MODBUS", "====================SET_HOLDING_REG_SLAVE=========================");
@@ -134,17 +146,15 @@ esp_err_t SmartPlugModbus_update(SmartPlugModbus_t *slave)
         ESP_LOGE("MODBUS", "===========================RESET_SLAVE===========================");
         slave->Coil.Array = 0x40; // reset;
         err = mbc_master_set_parameter(slave->Coil_descriptor.cid, (char *)slave->Coil_descriptor.param_key, &slave->Coil.Array, &type);
+        if (err != ESP_OK)
+        {
+            return err;
+        }
         vTaskDelay(pdMS_TO_TICKS(100));
-        err = SmartPlugModbus_GetAll(slave);
-        return err;
     }
 
-    if (slave->Coil.Array != temp_slave.Coil.Array)
-    {
-        ESP_LOGE("MODBUS", "=========================SET_COIL_SLAVE=========================");
-        err = mbc_master_set_parameter(slave->Coil_descriptor.cid, (char *)slave->Coil_descriptor.param_key, &slave->Coil.Array, &type);
-        ESP_LOGE("MODBUS", "=======================END_SET_COIL_SLAVE=======================");
-    }
+    err = SmartPlugModbus_GetAll(slave);
+    return err;
 
     return err;
 }
@@ -154,7 +164,6 @@ void SmartPlugModbus_Task(void *SMP_ARRAY)
 #define SPM_A_ptr ((SmartPlugModbus_Array_t *)SMP_ARRAY)
     while (true)
     {
-
         for (uint8_t i = 0; i < SPM_A_ptr->size; ++i)
         {
             if (xSemaphoreTake(SPM_A_ptr->SPM[i].sem, portMAX_DELAY) == pdTRUE)
@@ -165,11 +174,12 @@ void SmartPlugModbus_Task(void *SMP_ARRAY)
                     if (SmartPlugModbus_get_PlugState(SPM_A_ptr->SPM[i], j) == st_On)
                     {
                         SPM_A_ptr->SPM[i].Plugs[j].Tic = esp_rtc_get_time_us();
-                        SPM_A_ptr->SPM[i].Plugs[j].Power += SmartPlugModbus_get_PlugPower(SPM_A_ptr->SPM[i], j, Voltage);
+                        // SPM_A_ptr->SPM[i].Plugs[j].Power += SmartPlugModbus_get_PlugPower(SPM_A_ptr->SPM[i], j, Voltage);
 
                         if (SPM_A_ptr->SPM[i].Plugs[j].Power >= SPM_A_ptr->SPM[i].Plugs[j].PowerLimit ||
                             SPM_A_ptr->SPM[i].Plugs[j].Tic >= SPM_A_ptr->SPM[i].Plugs[j].TimeOut)
                         {
+                            ESP_LOGE("TEST", "PLUG %d OFF -> TIME %lld", j, (long long int)(SPM_A_ptr->SPM[i].Plugs[j].Tic - SPM_A_ptr->SPM[i].Plugs[j].TimeOut));
                             SPM_A_ptr->SPM[i].Coil.Array &= ~(1 << j);
                         }
                     }
@@ -189,7 +199,7 @@ void SmartPlugModbus_PlugOn(SmartPlugModbus_t *slave, uint8_t addr, float power,
         slave->Plugs[addr].Power = 0;
         slave->Plugs[addr].PowerLimit = power;
         slave->Plugs[addr].Tic = esp_rtc_get_time_us();
-        slave->Plugs[addr].TimeOut = esp_rtc_get_time_us() + (timeout * 1000);
+        slave->Plugs[addr].TimeOut = esp_rtc_get_time_us() + (timeout * 1000000);
         slave->Coil.Array |= (1 << addr);
         xSemaphoreGive(slave->sem);
     }

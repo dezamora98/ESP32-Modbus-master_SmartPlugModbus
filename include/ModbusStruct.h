@@ -127,7 +127,7 @@ typedef struct
         {
             uint16_t SystemState;
             ///@brief Array for the status of all plugs
-            uint16_t PlugState[ADDR_Reg_PlugState_5 - ADDR_Reg_PlugState_0 + 1];
+            PlugState_t PlugState[ADDR_Reg_PlugState_5 - ADDR_Reg_PlugState_0 + 1];
             union
             {
                 ///@brief Array for all analog registers

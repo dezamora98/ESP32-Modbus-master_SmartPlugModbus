@@ -65,7 +65,7 @@ typedef struct
     HoldingReg_t HoldingReg;
     InputReg_t InputReg;
     SemaphoreHandle_t sem;
-    Plug_t Plugs[5];
+    Plug_t Plugs[6];
 
     union
     {
