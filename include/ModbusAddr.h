@@ -36,7 +36,8 @@ typedef enum
     ADDR_Plug_3,
     ADDR_Plug_4,
     ADDR_Plug_5,
-    ADDR_Reset,
+    SIZE_Plug,
+    ADDR_Reset = SIZE_Plug,
     /*End User definitions*/
 
     /**

@@ -3,6 +3,7 @@
 #include "mbcontroller.h"
 #include "ModbusStruct.h"
 #include <esp32/rtc.h>
+#include <esp_timer.h>
 #include <freertos/semphr.h>
 
 #define Voltage 110
@@ -50,15 +51,16 @@ enum
 
 typedef struct
 {
+    uint8_t Addr;
     float Power;
     float PowerLimit;
-    uint64_t Tic;
-    uint64_t TimeOut;
-    PlugState_t* State;
+    struct SmartPlugModbus_t *SPM;
+    esp_timer_create_args_t _Timer_args;
+    esp_timer_handle_t _Timer_handle;
 } Plug_t;
 
 #pragma pack(push, 1)
-typedef struct
+typedef struct SmartPlugModbus_t
 {
     uint8_t ID;
     Coil_t Coil;

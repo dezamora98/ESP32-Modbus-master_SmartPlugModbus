@@ -66,13 +66,15 @@ esp_err_t SmartPlugModbus_init(SmartPlugModbus_t *slave, uint8_t *CID_count, con
 
     slave->sem = xSemaphoreCreateMutex();
 
-    for (uint8_t i = 0; i < 6; ++i)
+    for (uint8_t i = ADDR_Plug_0; i < SIZE_Plug; ++i)
     {
-        slave->Plugs[i].State = &(slave->InputReg.PlugState[i]);
+        slave->Plugs[i].Addr = i;
+        slave->Plugs[i].SPM = slave;
     }
     return mbc_master_set_descriptor(slave->mb_descriptor, 3);
 }
 
+#define LOG_MOD false
 esp_err_t SmartPlugModbus_GetAll(SmartPlugModbus_t *slave)
 {
     esp_err_t err = ESP_OK;
@@ -81,32 +83,38 @@ esp_err_t SmartPlugModbus_GetAll(SmartPlugModbus_t *slave)
     err = mbc_master_get_parameter(slave->Coil_descriptor.cid, (char *)(slave->Coil_descriptor.param_key), &(slave->Coil.Array), &type);
     if (err == ESP_OK)
     {
+#if LOG_MOD == true
         for (uint8_t i = ADDR_Plug_0; i <= ADDR_Plug_5; ++i)
         {
             ESP_LOGE("MODBUS", "SPM-%d -> Plug_0 = %d", slave->ID, (((slave->Coil.Array & ~(1 << i)) != 0) ? 1 : 0));
         }
         ESP_LOGE("MODBUS", "SPM-%d -> Reset = %d", slave->ID, slave->Coil.Reset);
+#endif
     }
 
     type = 0;
     err = mbc_master_get_parameter(slave->Holding_descriptor.cid, (char *)(slave->Holding_descriptor.param_key), (uint8_t *)(slave->HoldingReg.Array), &type);
     if (err == ESP_OK)
     {
+#if LOG_MOD == true
         for (uint8_t i = 0; i != SIZE_HoldingReg; ++i)
         {
 
             ESP_LOGE("MODBUS", "SPM-%d -> HOLING_%d = %d", slave->ID, i, slave->HoldingReg.Array[i]);
         }
+#endif
     }
 
     type = 0;
     err = mbc_master_get_parameter(slave->Input_descriptor.cid, (char *)(slave->Input_descriptor.param_key), (uint8_t *)(slave->InputReg.Array), &type);
     if (err == ESP_OK)
     {
+#if LOG_MOD == true
         for (uint8_t i = 0; i != SIZE_InputReg; ++i)
         {
             ESP_LOGE("MODBUS", "SPM-%d -> INPUT_%d = %d", slave->ID, i, slave->InputReg.Array[i]);
         }
+#endif
     }
     return err;
 }
@@ -117,20 +125,20 @@ esp_err_t SmartPlugModbus_update(SmartPlugModbus_t *slave)
     uint8_t type = 0;
     SmartPlugModbus_t temp_slave = *slave;
 
-    ESP_LOGE("MODBUS", "=========================GET_ALL_SLAVE=========================");
+    ESP_LOGE("MODBUS", " -> GET_ALL_SLAVE:");
     err = SmartPlugModbus_GetAll(&temp_slave);
-    ESP_LOGE("MODBUS", "=======================END_GET_ALL_SLAVE=======================");
+    ESP_LOGE("MODBUS", " -> END_GET_ALL_SLAVE");
 
     if ((slave->Coil.Array & 0x3f) != (temp_slave.Coil.Array & 0x3f))
     {
         slave->Coil.Array &= 0x3f;
-        ESP_LOGE("MODBUS", "=========================SET_COIL_SLAVE=========================");
+        ESP_LOGE("MODBUS", " -> SET_COIL_SLAVE:");
         err = mbc_master_set_parameter(slave->Coil_descriptor.cid, (char *)slave->Coil_descriptor.param_key, &slave->Coil.Array, &type);
         if (err != ESP_OK)
         {
             return err;
         }
-        ESP_LOGE("MODBUS", "=======================END_SET_COIL_SLAVE=======================");
+        ESP_LOGE("MODBUS", " -> END_SET_COIL_SLAVE");
     }
 
     if (memcmp(&slave->HoldingReg, &temp_slave.HoldingReg, SIZE_HoldingReg) != 0)
@@ -155,8 +163,6 @@ esp_err_t SmartPlugModbus_update(SmartPlugModbus_t *slave)
 
     err = SmartPlugModbus_GetAll(slave);
     return err;
-
-    return err;
 }
 
 void SmartPlugModbus_Task(void *SMP_ARRAY)
@@ -168,49 +174,93 @@ void SmartPlugModbus_Task(void *SMP_ARRAY)
         {
             if (xSemaphoreTake(SPM_A_ptr->SPM[i].sem, portMAX_DELAY) == pdTRUE)
             {
-                SmartPlugModbus_update(&(SPM_A_ptr->SPM[i]));
                 for (uint j = 0; j < 6; ++j)
                 {
-                    if (SmartPlugModbus_get_PlugState(SPM_A_ptr->SPM[i], j) == st_On)
+                    ESP_LOGE("MODBUS", " -> Check_plug_%d", j);
+
+                    if (SPM_A_ptr->SPM[i].InputReg.PlugState[j] == st_On &&
+                        (SPM_A_ptr->SPM[i].Plugs[j].Power >= SPM_A_ptr->SPM[i].Plugs[j].PowerLimit))
                     {
-                        SPM_A_ptr->SPM[i].Plugs[j].Tic = esp_rtc_get_time_us();
-                        // SPM_A_ptr->SPM[i].Plugs[j].Power += SmartPlugModbus_get_PlugPower(SPM_A_ptr->SPM[i], j, Voltage);
-
-                        if (SPM_A_ptr->SPM[i].Plugs[j].Power >= SPM_A_ptr->SPM[i].Plugs[j].PowerLimit ||
-                            SPM_A_ptr->SPM[i].Plugs[j].Tic >= SPM_A_ptr->SPM[i].Plugs[j].TimeOut)
-                        {
-                            ESP_LOGE("TEST", "PLUG %d OFF -> TIME %lld", j, (long long int)(SPM_A_ptr->SPM[i].Plugs[j].Tic - SPM_A_ptr->SPM[i].Plugs[j].TimeOut));
-                            SPM_A_ptr->SPM[i].Coil.Array &= ~(1 << j);
-                        }
+                        ESP_LOGE("MODBUS", "PLUG %d OFF -> POWER", j);
+                        SPM_A_ptr->SPM[i].Coil.Array &= ~(1 << j);
                     }
+                    #if false
+                    else if(SPM_A_ptr->SPM[i].InputReg.PlugState[j] > st_On)
+                    {
+                        ESP_LOGE("MODBUS", "PLUG %d OFF -> ERROR", j);
+                        SPM_A_ptr->SPM[i].Coil.Array &= ~(1 << j);
+                    }
+                    #endif
                 }
+                SmartPlugModbus_update(&(SPM_A_ptr->SPM[i]));
+                xSemaphoreGive(SPM_A_ptr->SPM->sem);
             }
-
-            xSemaphoreGive(SPM_A_ptr->SPM->sem);
         }
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        vTaskDelay(pdMS_TO_TICKS(250));
     }
 }
 
+/**
+ * @brief this hidden function is used as a callback to stop the connectors due to timeout
+ *
+ * @param arg Plug_t*
+ */
+void _SmartPLugModbus_Plug_TimeOut(void *arg)
+{
+    Plug_t *plug = (Plug_t *)arg;
+
+    ESP_LOGE("MODBUS", " -> TIMEOUT_PLUG");
+    if (xSemaphoreTake(plug->SPM->sem, portMAX_DELAY) == pdTRUE) // sync
+    {
+        plug->SPM->InputReg.PlugState[plug->Addr] = st_Off; // state off
+        esp_timer_stop(plug->_Timer_handle);                // stop timer
+        esp_timer_delete(plug->_Timer_handle);              // delete the timer handler
+        plug->SPM->Coil.Array &= ~(1 << plug->Addr);        // disconnect plug
+
+        xSemaphoreGive(plug->SPM->sem);                     // end sync
+
+        ESP_LOGE("MODBUS", " -> TIMEOUT_PLUG_EXECUTE");
+    }
+}
+
+/**
+ * @brief this function is used to set the power-on status of a plug together with its maximum time and power paramet
+ * 
+ * @param slave SmartPlugModbus slave ptr
+ * @param addr Plug address
+ * @param power Power limit for plug 
+ * @param timeout Timeout for plug 
+ */
 void SmartPlugModbus_PlugOn(SmartPlugModbus_t *slave, uint8_t addr, float power, uint64_t timeout)
 {
-    if (xSemaphoreTake(slave->sem, portMAX_DELAY) == pdTRUE)
+    Plug_t *plug = &slave->Plugs[addr];
+
+    ESP_LOGE("MODBUS", " -> plug %d on for %ds ", addr, (int)timeout);
+    if (xSemaphoreTake(slave->sem, portMAX_DELAY) == pdTRUE)                   // sync
     {
-        slave->Plugs[addr].Power = 0;
-        slave->Plugs[addr].PowerLimit = power;
-        slave->Plugs[addr].Tic = esp_rtc_get_time_us();
-        slave->Plugs[addr].TimeOut = esp_rtc_get_time_us() + (timeout * 1000000);
-        slave->Coil.Array |= (1 << addr);
-        xSemaphoreGive(slave->sem);
+
+        slave->Plugs[addr]._Timer_args = (esp_timer_create_args_t){
+            .callback = &_SmartPLugModbus_Plug_TimeOut,
+            .arg = (void *)(plug),
+        };                                                                     // set arguments for plug timeout
+        esp_timer_create(&plug->_Timer_args, &plug->_Timer_handle);            // create timer for plug
+        esp_timer_start_once(plug->_Timer_handle, timeout * 1000000);          // start timer
+
+        slave->Plugs[addr].Power = 0;                                          // reset power counter
+        slave->Plugs[addr].PowerLimit = power;                                 // set limit power
+        slave->Coil.Array |= (1 << addr);                                      // connect plug 
+
+        xSemaphoreGive(slave->sem);                                            // end sync
     }
 }
 
 void SmartPlugModbus_PlugOff(SmartPlugModbus_t *slave, uint8_t addr)
 {
-    if (xSemaphoreTake(slave->sem, portMAX_DELAY) == pdTRUE)
+    if (xSemaphoreTake(slave->sem, portMAX_DELAY) == pdTRUE) // sync
     {
-        slave->Coil.Array &= ~(1 << addr);
-        xSemaphoreGive(slave->sem);
+        slave->InputReg.PlugState[addr] = st_Off;   // set off state in plug
+        slave->Coil.Array &= ~(1 << addr);          // disconnect plug
+        xSemaphoreGive(slave->sem);                 // end sync
     }
 }
 

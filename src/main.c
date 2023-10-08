@@ -43,11 +43,14 @@ void app_main(void)
     xTaskCreate(SmartPlugModbus_Task, "SPM-Task", 8192, &SPM_ARRAY, tskIDLE_PRIORITY + 1, &SPM_task);
     while (true)
     {
-        for (uint8_t i = 0; i <= ADDR_Plug_5; ++i)
-        {
-            SmartPlugModbus_PlugOn(&slave_0,i,0xFFFF,3);
-            vTaskDelay(pdMS_TO_TICKS(5000));
-        }
+        uint8_t i = 0;
+        SmartPlugModbus_PlugOn(&slave_0, i++, 0xFFFF, 6);
+        SmartPlugModbus_PlugOn(&slave_0, i++, 0xFFFF, 5);
+        SmartPlugModbus_PlugOn(&slave_0, i++, 0xFFFF, 4);
+        SmartPlugModbus_PlugOn(&slave_0, i++, 0xFFFF, 3);
+        SmartPlugModbus_PlugOn(&slave_0, i++, 0xFFFF, 2);
+        SmartPlugModbus_PlugOn(&slave_0, i++, 0xFFFF, 1);
+        vTaskDelay(pdMS_TO_TICKS(10000));
     }
 
     vTaskSuspend(NULL);
